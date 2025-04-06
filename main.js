@@ -5,14 +5,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const generateBtn = document.getElementById("generateRowsBtn");
   const numRows = document.getElementById("numRows");
 
-  // Load existing rounds from the SQLite database via our /scores endpoint.
+  // Fetch existing rounds from the JSON file via /scores endpoint.
   fetch('/scores')
     .then(res => res.json())
     .then(data => {
       scorecardBody.innerHTML = "";
       data.forEach(entry => {
         const row = document.createElement("tr");
-        // Convert the holes array to individual table cells.
         let holesHTML = entry.holes.map(hole => `<td>${hole}</td>`).join("");
         row.innerHTML = `
           <td>${entry.name}</td>
@@ -29,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     .catch(err => console.error("Error fetching scores:", err));
 
-  // Generate new input rows when "Generate Input Rows" is clicked.
+  // Generate new input rows
   generateBtn.addEventListener("click", () => {
     const count = parseInt(numRows.value, 10);
     newRoundsTable.querySelector("tbody").innerHTML = "";
@@ -48,13 +47,13 @@ document.addEventListener("DOMContentLoaded", () => {
             <option value="Back">Back</option>
           </select>
         </td>
-        <!-- Front 9 holes (indexes 0..8) -->
+        <!-- Front 9 holes -->
         ${Array.from({ length: 9 }, (_, j) => `
           <td><input type="number" class="hole-input" name="hole${j}" min="1" required></td>
         `).join("")}
         <!-- F9 cell -->
         <td class="f9-cell sub-total">0</td>
-        <!-- Back 9 holes (indexes 9..17) -->
+        <!-- Back 9 holes -->
         ${Array.from({ length: 9 }, (_, j) => `
           <td><input type="number" class="hole-input" name="hole${j+9}" min="1" required></td>
         `).join("")}
@@ -68,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Attach input event listeners to calculate F9, B9, and Total in real time.
+  // Function to attach real-time calculation listeners to a row
   function attachCalculationListeners(row) {
     const holeInputs = row.querySelectorAll(".hole-input");
     const f9Cell = row.querySelector(".f9-cell");
@@ -94,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Handle form submission: send the new rounds to the server.
+  // Handle form submission
   addRoundsForm.addEventListener("submit", e => {
     e.preventDefault();
     const rows = newRoundsTable.querySelectorAll("tbody tr");
@@ -105,12 +104,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const date = inputs[1].value.trim();
       const course = inputs[2].value.trim();
       const tee = inputs[3].value;
-      // The next 18 inputs are the hole scores.
       const holes = Array.from(inputs).slice(4, 22).map(inp => parseInt(inp.value) || 0);
       const front9 = holes.slice(0, 9).reduce((a, b) => a + b, 0);
       const back9 = holes.slice(9).reduce((a, b) => a + b, 0);
       const total = front9 + back9;
-      // Skip rows with missing data.
       if (!name || !date || !course || holes.includes(0)) return;
       newRounds.push({ name, date, course, tee, holes, front9, back9, total });
     });
