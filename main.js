@@ -1,33 +1,71 @@
 document.addEventListener("DOMContentLoaded", () => {
   const scorecardBody = document.getElementById("scorecardBody");
+  const filterNameInput = document.getElementById("filterName");
+  const filterCourseInput = document.getElementById("filterCourse");
+  const filterTeeSelect = document.getElementById("filterTee");
+  const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+
+  let allRounds = []; // will hold the loaded rounds
+
+  // Function to render rounds to the table
+  function renderRounds(rounds) {
+    scorecardBody.innerHTML = "";
+    rounds.forEach(entry => {
+      const row = document.createElement("tr");
+      const holesHTML = entry.holes.map(score => `<td>${score}</td>`).join("");
+      row.innerHTML = `
+        <td>${entry.name}</td>
+        ${holesHTML}
+        <td class="sub-total">${entry.front9}</td>
+        <td class="sub-total">${entry.back9}</td>
+        <td class="total-cell">${entry.total}</td>
+        <td>${entry.date}</td>
+        <td>${entry.course}</td>
+        <td>${entry.tee}</td>
+      `;
+      scorecardBody.appendChild(row);
+    });
+  }
+
+  // Load and render rounds from JSON
+  fetch("scores_data_final.json")
+    .then((res) => res.json())
+    .then((data) => {
+      allRounds = data;
+      renderRounds(allRounds);
+    })
+    .catch((err) => console.error("Error loading JSON:", err));
+
+  // Filter function: filters rounds based on name, course, and tee
+  function filterRounds() {
+    const nameFilter = filterNameInput.value.toLowerCase();
+    const courseFilter = filterCourseInput.value.toLowerCase();
+    const teeFilter = filterTeeSelect.value;
+    const filtered = allRounds.filter(round => {
+      const matchesName = round.name.toLowerCase().includes(nameFilter);
+      const matchesCourse = round.course.toLowerCase().includes(courseFilter);
+      const matchesTee = teeFilter === "" || round.tee === teeFilter;
+      return matchesName && matchesCourse && matchesTee;
+    });
+    renderRounds(filtered);
+  }
+
+  // Add event listeners for filtering
+  filterNameInput.addEventListener("input", filterRounds);
+  filterCourseInput.addEventListener("input", filterRounds);
+  filterTeeSelect.addEventListener("change", filterRounds);
+  clearFiltersBtn.addEventListener("click", () => {
+    filterNameInput.value = "";
+    filterCourseInput.value = "";
+    filterTeeSelect.value = "";
+    renderRounds(allRounds);
+  });
+
+  // ---- Existing Code for Adding New Rounds ----
   const newRoundsTable = document.getElementById("newRoundsTable");
   const addRoundsForm = document.getElementById("newRoundsForm");
   const generateBtn = document.getElementById("generateRowsBtn");
   const numRows = document.getElementById("numRows");
-
-  // Load and render existing rounds from the JSON file
-  fetch("scores_data_final.json")
-    .then((res) => res.json())
-    .then((data) => {
-      scorecardBody.innerHTML = "";
-      data.forEach((entry) => {
-        const row = document.createElement("tr");
-        // Create HTML for each hole score
-        const holesHTML = entry.holes.map(score => `<td>${score}</td>`).join("");
-        row.innerHTML = `
-          <td>${entry.name}</td>
-          ${holesHTML}
-          <td class="sub-total">${entry.front9}</td>
-          <td class="sub-total">${entry.back9}</td>
-          <td class="total-cell">${entry.total}</td>
-          <td>${entry.date}</td>
-          <td>${entry.course}</td>
-          <td>${entry.tee}</td>
-        `;
-        scorecardBody.appendChild(row);
-      });
-    })
-    .catch((err) => console.error("Error loading JSON:", err));
 
   // Generate new input rows
   generateBtn.addEventListener("click", () => {
@@ -74,7 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const f9Cell = row.querySelector(".f9-cell");
     const b9Cell = row.querySelector(".b9-cell");
     const totalCell = row.querySelector(".total-cell");
-
     holeInputs.forEach((input) => {
       input.addEventListener("input", () => {
         let front9 = 0;
@@ -99,7 +136,6 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     const rows = newRoundsTable.querySelectorAll("tbody tr");
     const newRounds = [];
-
     rows.forEach((row) => {
       const inputs = row.querySelectorAll("input, select");
       const name = inputs[0].value.trim();
@@ -110,15 +146,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const front9 = holes.slice(0, 9).reduce((a, b) => a + b, 0);
       const back9 = holes.slice(9).reduce((a, b) => a + b, 0);
       const total = front9 + back9;
-      // Only add rows with complete data (no zeros in hole scores)
       if (!name || !date || !course || holes.includes(0)) return;
       newRounds.push({ name, date, course, tee, holes, front9, back9, total });
     });
-
     if (!newRounds.length) {
       return alert("Please complete all fields correctly.");
     }
-
     fetch("/add-rounds", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -138,3 +171,4 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   });
 });
+

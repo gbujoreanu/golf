@@ -13,10 +13,30 @@
       <li><a href="handicap.html">View Handicaps</a></li>
     </ul>
   </nav>
-
   <main>
     <h1>Scorecards</h1>
-    <!-- Display table for existing rounds -->
+    
+    <!-- Filter Section -->
+    <div id="filterSection" class="filter-section">
+      <label for="filterName">Name:</label>
+      <input type="text" id="filterName" placeholder="Filter by name">
+      
+      <label for="filterCourse">Course:</label>
+      <input type="text" id="filterCourse" placeholder="Filter by course">
+      
+      <label for="filterTee">Tee:</label>
+      <select id="filterTee">
+        <option value="">All</option>
+        <option value="Green">Green</option>
+        <option value="White">White</option>
+        <option value="Blue">Blue</option>
+        <option value="Back">Back</option>
+      </select>
+      
+      <button id="clearFiltersBtn">Clear Filters</button>
+    </div>
+    
+    <!-- Scorecard Table -->
     <div class="table-scroll scoreboard-container">
       <table id="scorecardTable" class="scorecard">
         <colgroup>
@@ -51,10 +71,12 @@
           <tr>
             <th></th>
             <!-- Holes 1–9 -->
-            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
+            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+            <th>6</th><th>7</th><th>8</th><th>9</th>
             <th></th>
             <!-- Holes 10–18 -->
-            <th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th>
+            <th>10</th><th>11</th><th>12</th><th>13</th><th>14</th>
+            <th>15</th><th>16</th><th>17</th><th>18</th>
             <th></th>
             <th></th>
             <th></th>

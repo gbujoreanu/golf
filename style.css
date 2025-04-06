@@ -51,7 +51,35 @@ main h1 {
   color: #ffffff;
 }
 
-/* Scrollable table wrapper */
+/* Filter Section */
+.filter-section {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.filter-section label {
+  margin: 0 0.5rem;
+}
+.filter-section input,
+.filter-section select {
+  padding: 0.3rem 0.5rem;
+  margin-right: 1rem;
+  border-radius: 4px;
+  border: 1px solid #3b3f53;
+}
+.filter-section button {
+  padding: 0.3rem 0.8rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #4a90e2;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.filter-section button:hover {
+  background-color: #3a78c2;
+}
+
+/* Scrollable Table Wrapper */
 .table-scroll {
   overflow-x: auto;
   margin-bottom: 2rem;
@@ -111,11 +139,11 @@ main h1 {
   color: #ffd966;
 }
 
-/* Container for existing scoreboard */
+/* Container for Existing Scoreboard */
 .scoreboard-container {
   border-radius: 8px;
   padding: 0.5rem;
-  background-color: rgba(0,0,0,0.1);
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 /* New Rounds Section */
