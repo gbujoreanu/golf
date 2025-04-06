@@ -11,7 +11,7 @@
     <ul>
       <li><a href="index.html">Enter Scores</a></li>
       <li><a href="handicap.html">View Handicaps</a></li>
-      <li><a href="courses.html">Manage Courses</a></li> <!-- NEW LINK -->
+      <li><a href="courses.html">Manage Courses</a></li>
     </ul>
   </nav>
   <main>
@@ -39,10 +39,10 @@
     </div>
   </main>
   <script>
-    // We'll fetch the courses from /courses, then load scores from scores_data_final.json
+    // Build mapping from courses.json
     let coursesMapping = {};
     fetch('/courses')
-      .then(res => res.json())
+      .then(response => response.json())
       .then(courses => {
         courses.forEach(c => {
           const key = `${c.course}-${c.tee}`;
@@ -52,13 +52,7 @@
       })
       .catch(err => {
         console.error("Error fetching courses:", err);
-        // fallback
-        coursesMapping = {
-          "Charwood-Green": { rating: 67.8, slope: 126 },
-          "Charwood-Red": { rating: 69.7, slope: 129 },
-          "Spur-Blue": { rating: 71.9, slope: 122 },
-          "Spur-Back": { rating: 70.4, slope: 118 }
-        };
+        // Fallback mapping if needed (empty mapping so unknown courses result in "N/A")
         loadScores();
       });
 
@@ -90,7 +84,7 @@
             tbody.appendChild(row);
           });
         })
-        .catch(err => console.error("Error loading or parsing JSON:", err));
+        .catch(err => console.error("Error loading or parsing scores JSON:", err));
     }
   </script>
 </body>

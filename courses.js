@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tee: document.getElementById("tee").value.trim(),
         rating: parseFloat(document.getElementById("rating").value),
         slope: parseInt(document.getElementById("slope").value, 10),
-        teeColor: document.getElementById("teeColor").value
+        teeColor: document.getElementById("teeColor").value.trim()
       };
   
       fetch("/add-course", {

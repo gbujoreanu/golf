@@ -18,7 +18,7 @@ app.get('/scores', (req, res) => {
       const rounds = JSON.parse(data);
       res.json(rounds);
     } catch (e) {
-      return res.status(500).json({ error: 'Failed to parse scores JSON.' });
+      res.status(500).json({ error: 'Failed to parse scores JSON.' });
     }
   });
 });
@@ -50,12 +50,12 @@ app.get('/courses', (req, res) => {
       const courses = JSON.parse(data);
       res.json(courses);
     } catch (e) {
-      return res.status(500).json({ error: 'Failed to parse courses JSON.' });
+      res.status(500).json({ error: 'Failed to parse courses JSON.' });
     }
   });
 });
 
-// POST add a new course
+// POST add new course
 app.post('/add-course', (req, res) => {
   const newCourse = req.body;
   fs.readFile(COURSES_PATH, 'utf8', (err, data) => {
@@ -74,10 +74,8 @@ app.post('/add-course', (req, res) => {
   });
 });
 
-// When running locally, start the server; otherwise export for Vercel.
-if (!process.env.VERCEL) {
-  app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-  });
-}
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
 module.exports = app;
