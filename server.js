@@ -10,72 +10,95 @@ const COURSES_PATH = path.join(__dirname, 'courses.json');
 app.use(express.static(__dirname));
 app.use(express.json());
 
-// GET rounds
+// GET rounds endpoint
 app.get('/scores', (req, res) => {
   fs.readFile(SCORES_PATH, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Failed to read scores file.' });
+    if (err) {
+      console.error("Error reading scores file:", err);
+      return res.status(500).json({ error: 'Failed to read scores file.' });
+    }
     try {
       const rounds = JSON.parse(data);
       res.json(rounds);
     } catch (e) {
+      console.error("Error parsing scores JSON:", e);
       res.status(500).json({ error: 'Failed to parse scores JSON.' });
     }
   });
 });
 
-// POST new rounds
+// POST new rounds endpoint
 app.post('/add-rounds', (req, res) => {
   const newRounds = req.body;
   fs.readFile(SCORES_PATH, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Failed to read scores file.' });
+    if (err) {
+      console.error("Error reading scores file:", err);
+      return res.status(500).json({ error: 'Failed to read scores file.' });
+    }
     let rounds = [];
     try {
       rounds = JSON.parse(data);
     } catch (e) {
+      console.error("Error parsing scores JSON:", e);
       return res.status(500).json({ error: 'Failed to parse scores JSON.' });
     }
     rounds = rounds.concat(newRounds);
     fs.writeFile(SCORES_PATH, JSON.stringify(rounds, null, 2), (err) => {
-      if (err) return res.status(500).json({ error: 'Failed to write scores file.' });
+      if (err) {
+        console.error("Error writing scores file:", err);
+        return res.status(500).json({ error: 'Failed to write scores file.' });
+      }
       res.json({ success: true });
     });
   });
 });
 
-// GET courses
+// GET courses endpoint – logs file content for debugging
 app.get('/courses', (req, res) => {
   fs.readFile(COURSES_PATH, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Failed to read courses file.' });
+    if (err) {
+      console.error("Error reading courses file:", err);
+      return res.status(500).json({ error: 'Failed to read courses file.' });
+    }
+    console.log("Courses data:", data);
     try {
       const courses = JSON.parse(data);
       res.json(courses);
     } catch (e) {
+      console.error("Error parsing courses JSON:", e);
       res.status(500).json({ error: 'Failed to parse courses JSON.' });
     }
   });
 });
 
-// POST add new course
+// POST add new course endpoint
 app.post('/add-course', (req, res) => {
   const newCourse = req.body;
   fs.readFile(COURSES_PATH, 'utf8', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Failed to read courses file.' });
+    if (err) {
+      console.error("Error reading courses file:", err);
+      return res.status(500).json({ error: 'Failed to read courses file.' });
+    }
     let courses = [];
     try {
       courses = JSON.parse(data);
     } catch (e) {
+      console.error("Error parsing courses JSON:", e);
       return res.status(500).json({ error: 'Failed to parse courses JSON.' });
     }
     courses.push(newCourse);
     fs.writeFile(COURSES_PATH, JSON.stringify(courses, null, 2), (err) => {
-      if (err) return res.status(500).json({ error: 'Failed to write courses file.' });
+      if (err) {
+        console.error("Error writing courses file:", err);
+        return res.status(500).json({ error: 'Failed to write courses file.' });
+      }
       res.json({ success: true });
     });
   });
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+
 module.exports = app;

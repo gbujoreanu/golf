@@ -11,32 +11,51 @@
     <ul>
       <li><a href="index.html">Enter Scores</a></li>
       <li><a href="handicap.html">View Handicaps</a></li>
-      <li><a href="courses.html">Manage Courses</a></li>
+      <li><a href="courses.html">Manage Courses</a></li> <!-- NEW LINK -->
     </ul>
   </nav>
-
   <main>
     <h1>Scorecards</h1>
-
-    <!-- Scoreboard Table -->
+    
+    <!-- Filter Section -->
+    <div id="filterSection" class="filter-section">
+      <label for="filterName">Name:</label>
+      <input type="text" id="filterName" placeholder="Filter by name">
+      
+      <label for="filterCourse">Course:</label>
+      <input type="text" id="filterCourse" placeholder="Filter by course">
+      
+      <label for="filterTee">Tee:</label>
+      <select id="filterTee">
+        <option value="">All</option>
+        <option value="Green">Green</option>
+        <option value="White">White</option>
+        <option value="Blue">Blue</option>
+        <option value="Back">Back</option>
+      </select>
+      
+      <button id="clearFiltersBtn">Clear Filters</button>
+    </div>
+    
+    <!-- Scorecard Table -->
     <div class="table-scroll scoreboard-container">
       <table id="scorecardTable" class="scorecard">
         <colgroup>
-          <col style="width:150px;">
-          <!-- Front 9 -->
+          <col style="width:150px;">  <!-- Name -->
+          <!-- Front 9 holes -->
           <col style="width:40px;"><col style="width:40px;"><col style="width:40px;"><col style="width:40px;">
           <col style="width:40px;"><col style="width:40px;"><col style="width:40px;"><col style="width:40px;">
           <col style="width:40px;">
-          <col style="width:50px;">
-          <!-- Back 9 -->
+          <col style="width:50px;">    <!-- F9 -->
+          <!-- Back 9 holes -->
           <col style="width:40px;"><col style="width:40px;"><col style="width:40px;"><col style="width:40px;">
           <col style="width:40px;"><col style="width:40px;"><col style="width:40px;"><col style="width:40px;">
           <col style="width:40px;">
-          <col style="width:50px;">
-          <col style="width:60px;">
-          <col style="width:120px;">
-          <col style="width:150px;">
-          <col style="width:100px;">
+          <col style="width:50px;">    <!-- B9 -->
+          <col style="width:60px;">    <!-- Total -->
+          <col style="width:120px;">   <!-- Date -->
+          <col style="width:150px;">   <!-- Course -->
+          <col style="width:100px;">   <!-- Tee -->
         </colgroup>
         <thead>
           <tr>
@@ -52,12 +71,18 @@
           </tr>
           <tr>
             <th></th>
+            <!-- Holes 1–9 -->
             <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
             <th>6</th><th>7</th><th>8</th><th>9</th>
             <th></th>
+            <!-- Holes 10–18 -->
             <th>10</th><th>11</th><th>12</th><th>13</th><th>14</th>
             <th>15</th><th>16</th><th>17</th><th>18</th>
-            <th></th><th></th><th></th><th></th><th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="scorecardBody"></tbody>
@@ -87,20 +112,18 @@
                 <th>Date</th>
                 <th>Course</th>
                 <th>Tee</th>
-                <!-- Front 9 -->
+                <!-- Front 9 holes -->
                 <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
                 <th>6</th><th>7</th><th>8</th><th>9</th>
                 <th>F9</th>
-                <!-- Back 9 -->
+                <!-- Back 9 holes -->
                 <th>10</th><th>11</th><th>12</th><th>13</th><th>14</th>
                 <th>15</th><th>16</th><th>17</th><th>18</th>
                 <th>B9</th>
                 <th>Total</th>
               </tr>
             </thead>
-            <tbody>
-              <!-- Dynamically generated rows -->
-            </tbody>
+            <tbody></tbody>
           </table>
         </div>
         <button type="submit" class="save-btn">Save Rounds</button>
@@ -110,3 +133,4 @@
   <script src="main.js"></script>
 </body>
 </html>
+
