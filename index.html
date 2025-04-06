@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Golf Scorecard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <ul>
+      <li><a href="index.html">Enter Scores</a></li>
+      <li><a href="handicap.html">View Handicaps</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>Scorecards</h1>
+
+    <!-- Existing scoreboard table for previously saved rounds -->
+    <div class="table-scroll scoreboard-container">
+      <table id="scorecardTable" class="scorecard">
+        <colgroup>
+          <col style="width:150px;">  <!-- Name -->
+          <!-- Front 9: 9 columns at 40px each -->
+          <col style="width:40px;"><col style="width:40px;"><col style="width:40px;"><col style="width:40px;">
+          <col style="width:40px;"><col style="width:40px;"><col style="width:40px;"><col style="width:40px;">
+          <col style="width:40px;">
+          <col style="width:50px;">    <!-- F9 -->
+          <!-- Back 9: 9 columns at 40px each -->
+          <col style="width:40px;"><col style="width:40px;"><col style="width:40px;"><col style="width:40px;">
+          <col style="width:40px;"><col style="width:40px;"><col style="width:40px;"><col style="width:40px;">
+          <col style="width:40px;">
+          <col style="width:50px;">    <!-- B9 -->
+          <col style="width:60px;">    <!-- Total -->
+          <col style="width:120px;">   <!-- Date -->
+          <col style="width:150px;">   <!-- Course -->
+          <col style="width:100px;">   <!-- Tee -->
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th colspan="9">Front 9</th>
+            <th>F9</th>
+            <th colspan="9">Back 9</th>
+            <th>B9</th>
+            <th>Total</th>
+            <th>Date</th>
+            <th>Course</th>
+            <th>Tee</th>
+          </tr>
+          <tr>
+            <th></th>
+            <!-- Holes 1–9 -->
+            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
+            <th></th>
+            <!-- Holes 10–18 -->
+            <th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="scorecardBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Add New Rounds Section -->
+    <div id="newRoundsSection" class="new-rounds-container">
+      <h2>Add New Rounds</h2>
+      <div class="generate-row-bar">
+        <label for="numRows">Number of Rounds to Add:</label>
+        <select id="numRows">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+        <button id="generateRowsBtn">Generate Input Rows</button>
+      </div>
+
+      <form id="newRoundsForm">
+        <div class="table-scroll">
+          <table id="newRoundsTable" class="scorecard input-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Date</th>
+                <th>Course</th>
+                <th>Tee</th>
+                <!-- Front 9 holes -->
+                <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
+                <th>F9</th>
+                <!-- Back 9 holes -->
+                <th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th>
+                <th>B9</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Dynamically generated rows will appear here -->
+            </tbody>
+          </table>
+        </div>
+        <button type="submit" class="save-btn">Save Rounds</button>
+      </form>
+    </div>
+  </main>
+
+  <script src="main.js"></script>
+</body>
+</html>
+
+
+
+
+

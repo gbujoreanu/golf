@@ -1,0 +1,247 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background: linear-gradient(180deg, #1d1e26 0%, #2a2d3a 100%);
+  color: #e0e0e0;
+  line-height: 1.6;
+  padding: 1rem;
+}
+
+/* Navigation Bar */
+nav {
+  background-color: #272b38;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  margin-bottom: 1.5rem;
+}
+nav ul {
+  display: flex;
+  list-style: none;
+  justify-content: center;
+  gap: 2rem;
+}
+nav a {
+  text-decoration: none;
+  color: #a0c4ff;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+nav a:hover {
+  color: #ffffff;
+}
+
+/* Main Container */
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+main h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #ffffff;
+}
+
+/* Scrollable table wrapper */
+.table-scroll {
+  overflow-x: auto;
+  margin-bottom: 2rem;
+}
+.table-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+.table-scroll::-webkit-scrollbar-thumb {
+  background-color: #4a90e2;
+  border-radius: 4px;
+}
+
+/* Scorecard & input tables */
+.scorecard {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: #2a2d3a;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+.scorecard thead {
+  background: #3b3f53;
+}
+.scorecard thead th {
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.scorecard th,
+.scorecard td {
+  padding: 0.75rem;
+  border: 1px solid #3b3f53;
+  text-align: center;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+.scorecard tbody tr:nth-child(even) {
+  background-color: #2e323f;
+}
+.scorecard tbody tr:nth-child(odd) {
+  background-color: #272b38;
+}
+.scorecard tbody tr:hover {
+  background-color: #3a3f53;
+}
+
+/* Special cell styles */
+.sub-total,
+.total-cell {
+  font-weight: 700;
+  background-color: #1f222a;
+}
+.total-cell {
+  color: #ffd966;
+}
+
+/* Container for existing scoreboard */
+.scoreboard-container {
+  border-radius: 8px;
+  padding: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* New Rounds Section */
+.new-rounds-container {
+  background-color: #272b38;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  margin-bottom: 2rem;
+}
+.new-rounds-container h2 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+  border-bottom: 2px solid #3b3f53;
+  padding-bottom: 0.5rem;
+  text-align: center;
+}
+.generate-row-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.generate-row-bar label {
+  font-size: 1rem;
+  color: #ffffff;
+}
+.generate-row-bar select,
+.generate-row-bar button {
+  background-color: #1d1e26;
+  color: #e0e0e0;
+  border: 1px solid #3b3f53;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.generate-row-bar button:hover {
+  background-color: #3a3f53;
+}
+
+/* The input table for new rounds */
+.scorecard.input-table {
+  margin-bottom: 1.5rem;
+}
+.scorecard.input-table thead {
+  background: #3b3f53;
+}
+.scorecard.input-table thead th {
+  padding: 0.65rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+.scorecard.input-table tbody tr:nth-child(even) {
+  background-color: #2e323f;
+}
+.scorecard.input-table tbody tr:nth-child(odd) {
+  background-color: #272b38;
+}
+.scorecard.input-table tbody tr:hover {
+  background-color: #3a3f53;
+}
+.scorecard.input-table th,
+.scorecard.input-table td {
+  border: 1px solid #3b3b4f;
+  padding: 0.65rem;
+  font-size: 0.95rem;
+}
+
+/* Hole input fields */
+.hole-input {
+  width: 3.5rem;
+  background-color: #1d1e26;
+  color: #e0e0e0;
+  border: 1px solid #3b3f53;
+  border-radius: 4px;
+  text-align: center;
+  padding: 0.3rem;
+  font-size: 0.9rem;
+}
+
+/* Save Rounds button */
+.save-btn {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  background-color: #4a90e2;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+}
+.save-btn:hover {
+  background-color: #3a78c2;
+  transform: scale(1.03);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .scorecard th,
+  .scorecard td {
+    font-size: 0.9rem;
+  }
+  .hole-input {
+    width: 3rem;
+  }
+  .save-btn {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .generate-row-bar {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+
