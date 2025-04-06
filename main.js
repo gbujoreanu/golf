@@ -5,18 +5,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const filterTeeSelect = document.getElementById("filterTee");
   const clearFiltersBtn = document.getElementById("clearFiltersBtn");
 
-  let allRounds = []; // will hold the loaded rounds
+  let allRounds = []; // This will store all loaded rounds
 
-  // Function to render rounds to the table
+  // Function to render rounds into the scoreboard table
   function renderRounds(rounds) {
     scorecardBody.innerHTML = "";
     rounds.forEach(entry => {
       const row = document.createElement("tr");
-      const holesHTML = entry.holes.map(score => `<td>${score}</td>`).join("");
+      // Split holes into front 9 and back 9
+      const frontHoles = entry.holes.slice(0, 9).map(score => `<td>${score}</td>`).join("");
+      const backHoles  = entry.holes.slice(9, 18).map(score => `<td>${score}</td>`).join("");
       row.innerHTML = `
         <td>${entry.name}</td>
-        ${holesHTML}
+        ${frontHoles}
         <td class="sub-total">${entry.front9}</td>
+        ${backHoles}
         <td class="sub-total">${entry.back9}</td>
         <td class="total-cell">${entry.total}</td>
         <td>${entry.date}</td>
@@ -27,16 +30,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Load and render rounds from JSON
+  // Load rounds from the JSON file
   fetch("scores_data_final.json")
-    .then((res) => res.json())
-    .then((data) => {
+    .then(res => res.json())
+    .then(data => {
       allRounds = data;
       renderRounds(allRounds);
     })
-    .catch((err) => console.error("Error loading JSON:", err));
+    .catch(err => console.error("Error loading JSON:", err));
 
-  // Filter function: filters rounds based on name, course, and tee
+  // Filter function to filter rounds by name, course, or tee
   function filterRounds() {
     const nameFilter = filterNameInput.value.toLowerCase();
     const courseFilter = filterCourseInput.value.toLowerCase();
@@ -50,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderRounds(filtered);
   }
 
-  // Add event listeners for filtering
+  // Add event listeners for filter inputs
   filterNameInput.addEventListener("input", filterRounds);
   filterCourseInput.addEventListener("input", filterRounds);
   filterTeeSelect.addEventListener("change", filterRounds);
@@ -61,23 +64,23 @@ document.addEventListener("DOMContentLoaded", () => {
     renderRounds(allRounds);
   });
 
-  // ---- Existing Code for Adding New Rounds ----
+  // ---- Code for Adding New Rounds ----
   const newRoundsTable = document.getElementById("newRoundsTable");
   const addRoundsForm = document.getElementById("newRoundsForm");
   const generateBtn = document.getElementById("generateRowsBtn");
   const numRows = document.getElementById("numRows");
 
-  // Generate new input rows
+  // Generate new input rows for adding rounds
   generateBtn.addEventListener("click", () => {
     const count = parseInt(numRows.value, 10);
     newRoundsTable.querySelector("tbody").innerHTML = "";
     for (let i = 0; i < count; i++) {
       const row = document.createElement("tr");
       row.innerHTML = `
-        <!-- Name, Date, Course, Tee -->
-        <td><input type="text" name="name" required></td>
+        <!-- Name, Date, Course, Tee with placeholders -->
+        <td><input type="text" name="name" placeholder="Name" required></td>
         <td><input type="date" name="date" required></td>
-        <td><input type="text" name="course" required></td>
+        <td><input type="text" name="course" placeholder="Course" required></td>
         <td>
           <select name="tee" required>
             <option value="Green">Green</option>
@@ -86,15 +89,15 @@ document.addEventListener("DOMContentLoaded", () => {
             <option value="Back">Back</option>
           </select>
         </td>
-        <!-- Front 9 holes (indexes 0..8) -->
+        <!-- Front 9 holes with placeholders -->
         ${Array.from({ length: 9 }, (_, j) => `
-          <td><input type="number" class="hole-input" name="hole${j}" min="1" required></td>
+          <td><input type="number" class="hole-input" name="hole${j}" min="1" placeholder="${j+1}" required></td>
         `).join("")}
         <!-- F9 cell -->
         <td class="f9-cell sub-total">0</td>
-        <!-- Back 9 holes (indexes 9..17) -->
+        <!-- Back 9 holes with placeholders -->
         ${Array.from({ length: 9 }, (_, j) => `
-          <td><input type="number" class="hole-input" name="hole${j+9}" min="1" required></td>
+          <td><input type="number" class="hole-input" name="hole${j+9}" min="1" placeholder="${j+10}" required></td>
         `).join("")}
         <!-- B9 cell -->
         <td class="b9-cell sub-total">0</td>
@@ -106,13 +109,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Attach real-time calculation listeners to a row's hole inputs
+  // Attach real-time calculation listeners to a new row's hole inputs
   function attachCalculationListeners(row) {
     const holeInputs = row.querySelectorAll(".hole-input");
     const f9Cell = row.querySelector(".f9-cell");
     const b9Cell = row.querySelector(".b9-cell");
     const totalCell = row.querySelector(".total-cell");
-    holeInputs.forEach((input) => {
+
+    holeInputs.forEach(input => {
       input.addEventListener("input", () => {
         let front9 = 0;
         let back9 = 0;
@@ -131,12 +135,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Handle form submission: add new rounds to the JSON file
-  addRoundsForm.addEventListener("submit", (e) => {
+  // Handle form submission to add new rounds
+  addRoundsForm.addEventListener("submit", e => {
     e.preventDefault();
     const rows = newRoundsTable.querySelectorAll("tbody tr");
     const newRounds = [];
-    rows.forEach((row) => {
+    rows.forEach(row => {
       const inputs = row.querySelectorAll("input, select");
       const name = inputs[0].value.trim();
       const date = inputs[1].value.trim();
