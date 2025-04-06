@@ -3,6 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
+
 
 const SCORES_PATH = path.join(__dirname, 'scores_data_final.json');
 const COURSES_PATH = path.join(__dirname, 'courses.json');
