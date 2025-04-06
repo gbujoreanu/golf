@@ -19,11 +19,11 @@
     <div class="table-scroll">
       <table id="handicapTable" class="scorecard">
         <colgroup>
-          <col style="width:150px;">   <!-- Name -->
-          <col style="width:150px;">   <!-- Course -->
-          <col style="width:100px;">   <!-- Tee -->
-          <col style="width:100px;">   <!-- Avg Score -->
-          <col style="width:100px;">   <!-- Handicap Differential -->
+          <col style="width:150px;">
+          <col style="width:150px;">
+          <col style="width:100px;">
+          <col style="width:100px;">
+          <col style="width:100px;">
         </colgroup>
         <thead>
           <tr>
@@ -39,53 +39,53 @@
     </div>
   </main>
   <script>
-    // Build mapping from courses.json
-    let coursesMapping = {};
-    fetch('/courses')
-      .then(response => response.json())
-      .then(courses => {
-        courses.forEach(c => {
-          const key = `${c.course}-${c.tee}`;
-          coursesMapping[key] = { rating: c.rating, slope: c.slope };
-        });
-        loadScores();
-      })
-      .catch(err => {
-        console.error("Error fetching courses:", err);
-        // Fallback mapping if needed (empty mapping so unknown courses result in "N/A")
-        loadScores();
-      });
-
-    function loadScores() {
-      fetch('scores_data_final.json')
+    // Function to load courses and build ratings mapping
+    function loadRatings() {
+      return fetch('courses.json')
         .then(response => response.json())
-        .then(json => {
-          const local = JSON.parse(localStorage.getItem("golfScores") || "[]");
-          const allRounds = [...json, ...local];
-          const groups = {};
-          allRounds.forEach(entry => {
-            const key = `${entry.name}-${entry.course}-${entry.tee}`;
-            if (!groups[key]) groups[key] = [];
-            if (!isNaN(entry.total)) groups[key].push(entry.total);
+        .then(courses => {
+          const ratings = {};
+          courses.forEach(item => {
+            const course = item.course;
+            item.tees.forEach(teeInfo => {
+              ratings[`${course}-${teeInfo.tee}`] = {
+                rating: teeInfo.rating,
+                slope: teeInfo.slope
+              };
+            });
           });
-          const tbody = document.getElementById("handicapBody");
-          tbody.innerHTML = "";
-          Object.entries(groups).forEach(([key, scores]) => {
-            const [name, course, tee] = key.split("-");
-            const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
-            const mapKey = `${course}-${tee}`;
-            let diff = "N/A";
-            if (coursesMapping[mapKey]) {
-              const { rating, slope } = coursesMapping[mapKey];
-              diff = (((avgScore - rating) * 113) / slope).toFixed(1);
-            }
-            const row = document.createElement("tr");
-            row.innerHTML = `<td>${name}</td><td>${course}</td><td>${tee}</td><td>${avgScore.toFixed(1)}</td><td>${diff}</td>`;
-            tbody.appendChild(row);
-          });
-        })
-        .catch(err => console.error("Error loading or parsing scores JSON:", err));
+          return ratings;
+        });
     }
+
+    Promise.all([
+      loadRatings(),
+      fetch('scores_data_final.json').then(response => response.json())
+    ]).then(([ratings, roundsData]) => {
+      const local = JSON.parse(localStorage.getItem("golfScores") || "[]");
+      const allRounds = [...roundsData, ...local];
+      const groups = {};
+      allRounds.forEach(entry => {
+        const key = `${entry.name}-${entry.course}-${entry.tee}`;
+        if (!groups[key]) groups[key] = [];
+        if (!isNaN(entry.total)) groups[key].push(entry.total);
+      });
+      const tbody = document.getElementById("handicapBody");
+      tbody.innerHTML = "";
+      Object.entries(groups).forEach(([key, scores]) => {
+        const [name, course, tee] = key.split("-");
+        const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+        const id = `${course}-${tee}`;
+        let diff = "N/A";
+        if (ratings[id]) {
+          const { rating, slope } = ratings[id];
+          diff = (((avgScore - rating) * 113) / slope).toFixed(1);
+        }
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${name}</td><td>${course}</td><td>${tee}</td><td>${avgScore.toFixed(1)}</td><td>${diff}</td>`;
+        tbody.appendChild(row);
+      });
+    }).catch(err => console.error("Error loading data:", err));
   </script>
 </body>
 </html>

@@ -37,7 +37,7 @@
       <button id="clearFiltersBtn">Clear Filters</button>
     </div>
     
-    <!-- Scorecard Table -->
+    <!-- Existing Scoreboard Table -->
     <div class="table-scroll scoreboard-container">
       <table id="scorecardTable" class="scorecard">
         <colgroup>
@@ -71,24 +71,20 @@
           </tr>
           <tr>
             <th></th>
-            <!-- Holes 1–9 -->
+            <!-- Holes 1-9 -->
             <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
             <th>6</th><th>7</th><th>8</th><th>9</th>
             <th></th>
-            <!-- Holes 10–18 -->
+            <!-- Holes 10-18 -->
             <th>10</th><th>11</th><th>12</th><th>13</th><th>14</th>
             <th>15</th><th>16</th><th>17</th><th>18</th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th></th>
+            <th></th><th></th><th></th><th></th><th></th>
           </tr>
         </thead>
         <tbody id="scorecardBody"></tbody>
       </table>
     </div>
-
+    
     <!-- Add New Rounds Section -->
     <div id="newRoundsSection" class="new-rounds-container">
       <h2>Add New Rounds</h2>
@@ -102,7 +98,6 @@
         </select>
         <button id="generateRowsBtn">Generate Input Rows</button>
       </div>
-
       <form id="newRoundsForm">
         <div class="table-scroll">
           <table id="newRoundsTable" class="scorecard input-table">
@@ -123,14 +118,70 @@
                 <th>Total</th>
               </tr>
             </thead>
-            <tbody></tbody>
+            <tbody>
+              <!-- New rows will be dynamically generated here -->
+            </tbody>
           </table>
         </div>
         <button type="submit" class="save-btn">Save Rounds</button>
       </form>
     </div>
   </main>
+  
+  <!-- Include main.js -->
   <script src="main.js"></script>
+  <!-- Additional script for dynamic Course and Tee dropdowns -->
+  <script>
+    // Load courses from courses.json
+    function loadCourses() {
+      return fetch('courses.json')
+        .then(response => response.json());
+    }
+    // Populate the Tee dropdown based on the course object
+    function populateTeeSelect(teeSelect, courseObj) {
+      teeSelect.innerHTML = "";
+      courseObj.tees.forEach(teeObj => {
+        const opt = document.createElement("option");
+        opt.value = teeObj.tee;
+        opt.textContent = teeObj.tee;
+        teeSelect.appendChild(opt);
+      });
+    }
+    // When rows are generated, replace the Course input with a dropdown
+    document.addEventListener("click", (e) => {
+      if (e.target && e.target.id === "generateRowsBtn") {
+        // Delay to allow new rows to be added by main.js
+        setTimeout(() => {
+          loadCourses().then(courses => {
+            const rows = document.querySelectorAll("#newRoundsTable tbody tr");
+            rows.forEach(row => {
+              // Replace the Course input with a dropdown
+              const courseCell = row.children[2];
+              const oldCourseInput = courseCell.querySelector("input[name='course']");
+              const courseSelect = document.createElement("select");
+              courseSelect.name = "course";
+              courseSelect.required = true;
+              courses.forEach(courseObj => {
+                const option = document.createElement("option");
+                option.value = courseObj.course;
+                option.textContent = courseObj.course;
+                courseSelect.appendChild(option);
+              });
+              courseCell.replaceChild(courseSelect, oldCourseInput);
+              
+              // Setup Tee dropdown: when the course changes, update the Tee options
+              const teeSelect = row.querySelector("select[name='tee']");
+              courseSelect.addEventListener("change", () => {
+                const selectedCourse = courses.find(c => c.course === courseSelect.value);
+                populateTeeSelect(teeSelect, selectedCourse);
+              });
+              // Trigger change event to load initial Tee options
+              courseSelect.dispatchEvent(new Event("change"));
+            });
+          }).catch(err => console.error("Error loading courses:", err));
+        }, 100);
+      }
+    });
+  </script>
 </body>
 </html>
-

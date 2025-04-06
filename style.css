@@ -39,7 +39,7 @@ nav a:hover {
 
 /* Main Container */
 main {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 1rem;
 }
@@ -51,58 +51,11 @@ main h1 {
   color: #ffffff;
 }
 
-/* MANAGE COURSES PAGE */
-.manage-courses-container {
-  background-color: #272b38;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-  margin: 0 auto 2rem auto;
-  max-width: 600px;
-}
-.form-group {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-.form-group label {
-  min-width: 120px;
-  margin-right: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-.form-group input[type="text"],
-.form-group input[type="number"],
-.form-group input[type="color"] {
-  flex: 1;
-  background-color: #1d1e26;
-  color: #e0e0e0;
-  border: 1px solid #3b3f53;
-  border-radius: 4px;
-  padding: 0.5rem;
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.2s ease;
-}
-.form-group input[type="text"]:focus,
-.form-group input[type="number"]:focus,
-.form-group input[type="color"]:focus {
-  border-color: #4a90e2;
-}
-.form-group input[type="number"] {
-  width: 150px;
-}
-#courseMessage {
-  margin-top: 1rem;
-  text-align: center;
-  font-size: 1rem;
-  color: #4a90e2;
-}
-
 /* Scrollable Table Wrapper */
 .table-scroll {
   overflow-x: auto;
   margin-bottom: 2rem;
+  max-width: 100%;
 }
 .table-scroll::-webkit-scrollbar {
   height: 8px;
@@ -159,7 +112,7 @@ main h1 {
   color: #ffd966;
 }
 
-/* Container for Existing Scoreboard */
+/* Existing Scoreboard Container */
 .scoreboard-container {
   border-radius: 8px;
   padding: 0.5rem;
@@ -255,6 +208,12 @@ main h1 {
 .scorecard.input-table {
   margin-bottom: 1.5rem;
 }
+.scorecard.input-table th,
+.scorecard.input-table td {
+  border: 1px solid #3b3b4f;
+  padding: 0.65rem;
+  font-size: 0.95rem;
+}
 .scorecard.input-table thead {
   background: #3b3f53;
 }
@@ -272,22 +231,16 @@ main h1 {
 .scorecard.input-table tbody tr:hover {
   background-color: #3a3f53;
 }
-.scorecard.input-table th,
-.scorecard.input-table td {
-  border: 1px solid #3b3b4f;
-  padding: 0.65rem;
-  font-size: 0.95rem;
-}
 
 /* Hole Input Fields */
 .hole-input {
-  width: 3.5rem;
+  width: 3.75rem;
   background-color: #1d1e26;
   color: #e0e0e0;
   border: 1px solid #3b3f53;
   border-radius: 4px;
   text-align: center;
-  padding: 0.3rem;
+  padding: 0.4rem;
   font-size: 0.9rem;
   outline: none;
   transition: border-color 0.2s ease;
@@ -301,11 +254,14 @@ main h1 {
   border-color: #4a90e2;
 }
 
-/* Date & Text Inputs in Table */
-input[type="text"],
-input[type="date"],
-select.course-select,
-select.tee-select {
+/* Date & Text Inputs and Selects */
+#newRoundsTable input[type="text"],
+#newRoundsTable input[type="date"],
+#newRoundsTable select[name="course"],
+#newRoundsTable select[name="tee"] {
+  min-width: 140px;
+  max-width: 180px;
+  width: 100%;
   background-color: #1d1e26;
   color: #e0e0e0;
   border: 1px solid #3b3f53;
@@ -314,25 +270,14 @@ select.tee-select {
   padding: 0.3rem;
   transition: border-color 0.2s ease;
 }
-input[type="text"]:focus,
-input[type="date"]:focus,
-select.course-select:focus,
-select.tee-select:focus {
+#newRoundsTable input[type="text"]:focus,
+#newRoundsTable input[type="date"]:focus,
+#newRoundsTable select[name="course"]:focus,
+#newRoundsTable select[name="tee"]:focus {
   border-color: #4a90e2;
 }
 
-/* Placeholder Styles */
-::placeholder {
-  color: #888;
-  opacity: 1;
-}
-
-/* Date Picker Icon Adjustment */
-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.8);
-}
-
-/* Save Rounds / Add Course Button */
+/* Save Button */
 .save-btn {
   display: block;
   width: 100%;
@@ -364,7 +309,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     font-size: 0.9rem;
   }
   .hole-input {
-    width: 3rem;
+    width: 3.2rem;
   }
   .save-btn {
     font-size: 1rem;
@@ -387,5 +332,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   .form-group input[type="number"],
   .form-group input[type="color"] {
     width: 100%;
+  }
+
+  #newRoundsTable input[type="text"],
+  #newRoundsTable input[type="date"],
+  #newRoundsTable select[name="course"],
+  #newRoundsTable select[name="tee"] {
+    min-width: 100px;
+    font-size: 0.85rem;
+  }
+
+  .hole-input {
+    width: 2.8rem;
+    font-size: 0.85rem;
   }
 }
