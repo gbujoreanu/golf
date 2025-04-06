@@ -5,14 +5,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const generateBtn = document.getElementById("generateRowsBtn");
   const numRows = document.getElementById("numRows");
 
-  // Fetch existing rounds from the JSON file via /scores endpoint.
-  fetch('/scores')
-    .then(res => res.json())
-    .then(data => {
+  // Load and render existing rounds from the JSON file
+  fetch("scores_data_final.json")
+    .then((res) => res.json())
+    .then((data) => {
       scorecardBody.innerHTML = "";
-      data.forEach(entry => {
+      data.forEach((entry) => {
         const row = document.createElement("tr");
-        let holesHTML = entry.holes.map(hole => `<td>${hole}</td>`).join("");
+        // Create HTML for each hole score
+        const holesHTML = entry.holes.map(score => `<td>${score}</td>`).join("");
         row.innerHTML = `
           <td>${entry.name}</td>
           ${holesHTML}
@@ -26,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
         scorecardBody.appendChild(row);
       });
     })
-    .catch(err => console.error("Error fetching scores:", err));
+    .catch((err) => console.error("Error loading JSON:", err));
 
   // Generate new input rows
   generateBtn.addEventListener("click", () => {
@@ -47,13 +48,13 @@ document.addEventListener("DOMContentLoaded", () => {
             <option value="Back">Back</option>
           </select>
         </td>
-        <!-- Front 9 holes -->
+        <!-- Front 9 holes (indexes 0..8) -->
         ${Array.from({ length: 9 }, (_, j) => `
           <td><input type="number" class="hole-input" name="hole${j}" min="1" required></td>
         `).join("")}
         <!-- F9 cell -->
         <td class="f9-cell sub-total">0</td>
-        <!-- Back 9 holes -->
+        <!-- Back 9 holes (indexes 9..17) -->
         ${Array.from({ length: 9 }, (_, j) => `
           <td><input type="number" class="hole-input" name="hole${j+9}" min="1" required></td>
         `).join("")}
@@ -67,14 +68,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Function to attach real-time calculation listeners to a row
+  // Attach real-time calculation listeners to a row's hole inputs
   function attachCalculationListeners(row) {
     const holeInputs = row.querySelectorAll(".hole-input");
     const f9Cell = row.querySelector(".f9-cell");
     const b9Cell = row.querySelector(".b9-cell");
     const totalCell = row.querySelector(".total-cell");
 
-    holeInputs.forEach(input => {
+    holeInputs.forEach((input) => {
       input.addEventListener("input", () => {
         let front9 = 0;
         let back9 = 0;
@@ -93,12 +94,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Handle form submission
-  addRoundsForm.addEventListener("submit", e => {
+  // Handle form submission: add new rounds to the JSON file
+  addRoundsForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const rows = newRoundsTable.querySelectorAll("tbody tr");
     const newRounds = [];
-    rows.forEach(row => {
+
+    rows.forEach((row) => {
       const inputs = row.querySelectorAll("input, select");
       const name = inputs[0].value.trim();
       const date = inputs[1].value.trim();
@@ -108,12 +110,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const front9 = holes.slice(0, 9).reduce((a, b) => a + b, 0);
       const back9 = holes.slice(9).reduce((a, b) => a + b, 0);
       const total = front9 + back9;
+      // Only add rows with complete data (no zeros in hole scores)
       if (!name || !date || !course || holes.includes(0)) return;
       newRounds.push({ name, date, course, tee, holes, front9, back9, total });
     });
+
     if (!newRounds.length) {
       return alert("Please complete all fields correctly.");
     }
+
     fetch("/add-rounds", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
