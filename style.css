@@ -302,6 +302,53 @@ main h1 {
   border: 2px solid #4a90e2;
 }
 
+/* ---------- UPDATED STYLES FOR MANAGE COURSES ---------- */
+.manage-courses-container {
+  background-color: #272b38;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  max-width: 600px;
+  margin: 0 auto 2rem auto;
+}
+.manage-courses-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.manage-courses-container .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.manage-courses-container label {
+  font-size: 1rem;
+  color: #ffffff;
+}
+.manage-courses-container input {
+  background-color: #1d1e26;
+  color: #e0e0e0;
+  border: 1px solid #3b3f53;
+  border-radius: 4px;
+  padding: 0.4rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.manage-courses-container input:focus {
+  border-color: #4a90e2;
+}
+#courseMessage {
+  margin-top: 1rem;
+  text-align: center;
+  font-weight: 600;
+  color: #ffd966;
+}
+
+/* Table for displaying existing courses in courses.html (Optional) */
+#existingCoursesTable {
+  margin-top: 2rem;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 1200px) {
   .scorecard th,

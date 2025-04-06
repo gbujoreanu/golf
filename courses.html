@@ -16,6 +16,8 @@
   </nav>
   <main>
     <h1>Manage Courses</h1>
+
+    <!-- The form container -->
     <div class="manage-courses-container">
       <form id="courseForm">
         <div class="form-group">
@@ -42,7 +44,25 @@
       </form>
       <div id="courseMessage"></div>
     </div>
+
+    <!-- Display existing courses -->
+    <div class="table-scroll" id="existingCoursesTable">
+      <table class="scorecard">
+        <thead>
+          <tr>
+            <th>Course</th>
+            <th>Tee</th>
+            <th>Rating</th>
+            <th>Slope</th>
+            <th>Tee Color</th>
+          </tr>
+        </thead>
+        <tbody id="coursesBody"></tbody>
+      </table>
+    </div>
+
   </main>
   <script src="courses.js"></script>
 </body>
 </html>
+

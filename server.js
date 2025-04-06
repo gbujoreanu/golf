@@ -53,7 +53,7 @@ app.post('/add-rounds', (req, res) => {
   });
 });
 
-// GET courses endpoint – logs file content for debugging
+// GET courses endpoint
 app.get('/courses', (req, res) => {
   fs.readFile(COURSES_PATH, 'utf8', (err, data) => {
     if (err) {
@@ -72,6 +72,7 @@ app.get('/courses', (req, res) => {
 });
 
 // POST add new course endpoint
+// UPDATED: Merge new data with existing “tees” array if the course exists
 app.post('/add-course', (req, res) => {
   const newCourse = req.body;
   fs.readFile(COURSES_PATH, 'utf8', (err, data) => {
@@ -86,7 +87,32 @@ app.post('/add-course', (req, res) => {
       console.error("Error parsing courses JSON:", e);
       return res.status(500).json({ error: 'Failed to parse courses JSON.' });
     }
-    courses.push(newCourse);
+
+    // Check if this course name already exists
+    const existingCourse = courses.find(c => c.course === newCourse.course);
+    if (existingCourse) {
+      // Add a new tee to the existing course’s tees array
+      existingCourse.tees.push({
+        tee: newCourse.tee,
+        rating: newCourse.rating,
+        slope: newCourse.slope,
+        teeColor: newCourse.teeColor
+      });
+    } else {
+      // Create a brand-new course object with a tees array
+      courses.push({
+        course: newCourse.course,
+        tees: [
+          {
+            tee: newCourse.tee,
+            rating: newCourse.rating,
+            slope: newCourse.slope,
+            teeColor: newCourse.teeColor
+          }
+        ]
+      });
+    }
+
     fs.writeFile(COURSES_PATH, JSON.stringify(courses, null, 2), (err) => {
       if (err) {
         console.error("Error writing courses file:", err);
