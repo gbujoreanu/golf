@@ -11,6 +11,7 @@
     <ul>
       <li><a href="index.html">Enter Scores</a></li>
       <li><a href="handicap.html">View Handicaps</a></li>
+      <li><a href="courses.html">Manage Courses</a></li> <!-- NEW LINK -->
     </ul>
   </nav>
   <main>
@@ -38,42 +39,59 @@
     </div>
   </main>
   <script>
-    const ratings = {
-      'Charwood-Green': { rating: 67.8, slope: 126 },
-      'Charwood-Red':   { rating: 69.7, slope: 129 },
-      'Spur-Blue':      { rating: 71.9, slope: 122 },
-      'Spur-Back':      { rating: 70.4, slope: 118 }
-    };
-
-    fetch('scores_data_final.json')
-      .then(response => response.json())
-      .then(json => {
-        const local = JSON.parse(localStorage.getItem("golfScores") || "[]");
-        const allRounds = [...json, ...local];
-        const groups = {};
-        allRounds.forEach(entry => {
-          const key = `${entry.name}-${entry.course}-${entry.tee}`;
-          if (!groups[key]) groups[key] = [];
-          if (!isNaN(entry.total)) groups[key].push(entry.total);
+    // We'll fetch the courses from /courses, then load scores from scores_data_final.json
+    let coursesMapping = {};
+    fetch('/courses')
+      .then(res => res.json())
+      .then(courses => {
+        courses.forEach(c => {
+          const key = `${c.course}-${c.tee}`;
+          coursesMapping[key] = { rating: c.rating, slope: c.slope };
         });
-        const tbody = document.getElementById("handicapBody");
-        tbody.innerHTML = "";
-        Object.entries(groups).forEach(([key, scores]) => {
-          const [name, course, tee] = key.split("-");
-          const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
-          const id = `${course}-${tee}`;
-          let diff = "N/A";
-          if (ratings[id]) {
-            const { rating, slope } = ratings[id];
-            diff = (((avgScore - rating) * 113) / slope).toFixed(1);
-          }
-          const row = document.createElement("tr");
-          row.innerHTML = `<td>${name}</td><td>${course}</td><td>${tee}</td><td>${avgScore.toFixed(1)}</td><td>${diff}</td>`;
-          tbody.appendChild(row);
-        });
+        loadScores();
       })
-      .catch(err => console.error("Error loading or parsing JSON:", err));
+      .catch(err => {
+        console.error("Error fetching courses:", err);
+        // fallback
+        coursesMapping = {
+          "Charwood-Green": { rating: 67.8, slope: 126 },
+          "Charwood-Red": { rating: 69.7, slope: 129 },
+          "Spur-Blue": { rating: 71.9, slope: 122 },
+          "Spur-Back": { rating: 70.4, slope: 118 }
+        };
+        loadScores();
+      });
+
+    function loadScores() {
+      fetch('scores_data_final.json')
+        .then(response => response.json())
+        .then(json => {
+          const local = JSON.parse(localStorage.getItem("golfScores") || "[]");
+          const allRounds = [...json, ...local];
+          const groups = {};
+          allRounds.forEach(entry => {
+            const key = `${entry.name}-${entry.course}-${entry.tee}`;
+            if (!groups[key]) groups[key] = [];
+            if (!isNaN(entry.total)) groups[key].push(entry.total);
+          });
+          const tbody = document.getElementById("handicapBody");
+          tbody.innerHTML = "";
+          Object.entries(groups).forEach(([key, scores]) => {
+            const [name, course, tee] = key.split("-");
+            const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+            const mapKey = `${course}-${tee}`;
+            let diff = "N/A";
+            if (coursesMapping[mapKey]) {
+              const { rating, slope } = coursesMapping[mapKey];
+              diff = (((avgScore - rating) * 113) / slope).toFixed(1);
+            }
+            const row = document.createElement("tr");
+            row.innerHTML = `<td>${name}</td><td>${course}</td><td>${tee}</td><td>${avgScore.toFixed(1)}</td><td>${diff}</td>`;
+            tbody.appendChild(row);
+          });
+        })
+        .catch(err => console.error("Error loading or parsing JSON:", err));
+    }
   </script>
 </body>
 </html>
-

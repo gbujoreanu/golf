@@ -1,18 +1,51 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Global variables for rounds and courses
   const scorecardBody = document.getElementById("scorecardBody");
+  const newRoundsTable = document.getElementById("newRoundsTable");
+  const addRoundsForm = document.getElementById("newRoundsForm");
+  const generateBtn = document.getElementById("generateRowsBtn");
+  const numRows = document.getElementById("numRows");
+
+  // Filter variables
   const filterNameInput = document.getElementById("filterName");
   const filterCourseInput = document.getElementById("filterCourse");
   const filterTeeSelect = document.getElementById("filterTee");
   const clearFiltersBtn = document.getElementById("clearFiltersBtn");
 
-  let allRounds = []; // This will store all loaded rounds
+  let allRounds = [];      // Loaded rounds
+  let coursesList = [];    // Loaded courses
 
-  // Function to render rounds into the scoreboard table
+  // Fetch courses for both filtering and for new rounds
+  fetch('/courses')
+    .then(res => res.json())
+    .then(data => {
+      coursesList = data;
+      updateFilterTeeOptions();
+    })
+    .catch(err => {
+      console.error("Error fetching courses:", err);
+      // Fallback if needed
+      coursesList = [
+        { course: "Charwood", tee: "Green", rating: 67.8, slope: 126 },
+        { course: "Charwood", tee: "Red", rating: 69.7, slope: 129 },
+        { course: "Spur", tee: "Blue", rating: 71.9, slope: 122 },
+        { course: "Spur", tee: "Back", rating: 70.4, slope: 118 }
+      ];
+      updateFilterTeeOptions();
+    });
+
+  // Update filter tee dropdown with unique tee values from coursesList
+  function updateFilterTeeOptions() {
+    const tees = [...new Set(coursesList.map(c => c.tee))];
+    filterTeeSelect.innerHTML = '<option value="">All</option>' +
+      tees.map(tee => `<option value="${tee}">${tee}</option>`).join("");
+  }
+
+  // Render rounds in the scoreboard table
   function renderRounds(rounds) {
     scorecardBody.innerHTML = "";
     rounds.forEach(entry => {
       const row = document.createElement("tr");
-      // Split holes into front 9 and back 9
       const frontHoles = entry.holes.slice(0, 9).map(score => `<td>${score}</td>`).join("");
       const backHoles  = entry.holes.slice(9, 18).map(score => `<td>${score}</td>`).join("");
       row.innerHTML = `
@@ -30,16 +63,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Load rounds from the JSON file
+  // Load rounds from scores_data_final.json
   fetch("scores_data_final.json")
     .then(res => res.json())
     .then(data => {
       allRounds = data;
       renderRounds(allRounds);
     })
-    .catch(err => console.error("Error loading JSON:", err));
+    .catch(err => console.error("Error loading rounds:", err));
 
-  // Filter function to filter rounds by name, course, or tee
+  // Filter rounds function
   function filterRounds() {
     const nameFilter = filterNameInput.value.toLowerCase();
     const courseFilter = filterCourseInput.value.toLowerCase();
@@ -53,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderRounds(filtered);
   }
 
-  // Add event listeners for filter inputs
+  // Attach filter event listeners
   filterNameInput.addEventListener("input", filterRounds);
   filterCourseInput.addEventListener("input", filterRounds);
   filterTeeSelect.addEventListener("change", filterRounds);
@@ -65,28 +98,39 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ---- Code for Adding New Rounds ----
-  const newRoundsTable = document.getElementById("newRoundsTable");
-  const addRoundsForm = document.getElementById("newRoundsForm");
-  const generateBtn = document.getElementById("generateRowsBtn");
-  const numRows = document.getElementById("numRows");
 
-  // Generate new input rows for adding rounds
+  // Helper: Get unique course names from coursesList
+  function getUniqueCourses() {
+    return [...new Set(coursesList.map(c => c.course))];
+  }
+
+  // When generating new input rows, populate course dropdown and set up tee dropdown update
   generateBtn.addEventListener("click", () => {
     const count = parseInt(numRows.value, 10);
     newRoundsTable.querySelector("tbody").innerHTML = "";
     for (let i = 0; i < count; i++) {
       const row = document.createElement("tr");
+      
+      // Create course dropdown options
+      const courseOptions = getUniqueCourses()
+        .map(course => `<option value="${course}">${course}</option>`)
+        .join("");
+      
       row.innerHTML = `
-        <!-- Name, Date, Course, Tee with placeholders -->
+        <!-- Name, Date -->
         <td><input type="text" name="name" placeholder="Name" required></td>
         <td><input type="date" name="date" required></td>
-        <td><input type="text" name="course" placeholder="Course" required></td>
+        <!-- Course dropdown -->
         <td>
-          <select name="tee" required>
-            <option value="Green">Green</option>
-            <option value="White">White</option>
-            <option value="Blue">Blue</option>
-            <option value="Back">Back</option>
+          <select name="course" class="course-select" required>
+            <option value="">Select Course</option>
+            ${courseOptions}
+          </select>
+        </td>
+        <!-- Tee dropdown (will update based on selected course) -->
+        <td>
+          <select name="tee" class="tee-select" required>
+            <option value="">Select Tee</option>
           </select>
         </td>
         <!-- Front 9 holes with placeholders -->
@@ -106,10 +150,23 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
       newRoundsTable.querySelector("tbody").appendChild(row);
       attachCalculationListeners(row);
+      
+      // Update tee dropdown based on selected course
+      const courseSelect = row.querySelector(".course-select");
+      const teeSelect = row.querySelector(".tee-select");
+      courseSelect.addEventListener("change", () => {
+        const selectedCourse = courseSelect.value;
+        const availableTees = coursesList
+          .filter(c => c.course === selectedCourse)
+          .map(c => c.tee);
+        const uniqueTees = [...new Set(availableTees)];
+        teeSelect.innerHTML = '<option value="">Select Tee</option>' +
+          uniqueTees.map(tee => `<option value="${tee}">${tee}</option>`).join("");
+      });
     }
   });
 
-  // Attach real-time calculation listeners to a new row's hole inputs
+  // Attach real-time calculation listeners for a row
   function attachCalculationListeners(row) {
     const holeInputs = row.querySelectorAll(".hole-input");
     const f9Cell = row.querySelector(".f9-cell");
@@ -122,11 +179,8 @@ document.addEventListener("DOMContentLoaded", () => {
         let back9 = 0;
         holeInputs.forEach((inp, idx) => {
           const val = parseInt(inp.value) || 0;
-          if (idx < 9) {
-            front9 += val;
-          } else {
-            back9 += val;
-          }
+          if (idx < 9) front9 += val;
+          else back9 += val;
         });
         f9Cell.textContent = front9;
         b9Cell.textContent = back9;
@@ -144,13 +198,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const inputs = row.querySelectorAll("input, select");
       const name = inputs[0].value.trim();
       const date = inputs[1].value.trim();
-      const course = inputs[2].value.trim();
+      const course = inputs[2].value;
       const tee = inputs[3].value;
       const holes = Array.from(inputs).slice(4, 22).map(inp => parseInt(inp.value) || 0);
       const front9 = holes.slice(0, 9).reduce((a, b) => a + b, 0);
       const back9 = holes.slice(9).reduce((a, b) => a + b, 0);
       const total = front9 + back9;
-      if (!name || !date || !course || holes.includes(0)) return;
+      if (!name || !date || !course || !tee || holes.includes(0)) return;
       newRounds.push({ name, date, course, tee, holes, front9, back9, total });
     });
     if (!newRounds.length) {

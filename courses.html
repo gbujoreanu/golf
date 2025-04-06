@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manage Courses</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <ul>
+      <li><a href="index.html">Enter Scores</a></li>
+      <li><a href="handicap.html">View Handicaps</a></li>
+      <li><a href="courses.html">Manage Courses</a></li>
+    </ul>
+  </nav>
+  <main>
+    <h1>Manage Courses</h1>
+    <div class="manage-courses-container">
+      <form id="courseForm">
+        <div class="form-group">
+          <label for="courseName">Course Name:</label>
+          <input 
+            type="text" 
+            id="courseName" 
+            name="course" 
+            placeholder="Enter course name" 
+            required
+          >
+        </div>
+        <div class="form-group">
+          <label for="tee">Tee:</label>
+          <input 
+            type="text" 
+            id="tee" 
+            name="tee" 
+            placeholder="Enter tee name" 
+            required
+          >
+        </div>
+        <div class="form-group">
+          <label for="rating">Course Rating:</label>
+          <input 
+            type="number" 
+            step="0.1" 
+            id="rating" 
+            name="rating" 
+            placeholder="Enter rating" 
+            required
+          >
+        </div>
+        <div class="form-group">
+          <label for="slope">Slope Rating:</label>
+          <input 
+            type="number" 
+            id="slope" 
+            name="slope" 
+            placeholder="Enter slope" 
+            required
+          >
+        </div>
+        <div class="form-group">
+          <label for="teeColor">Tee Color:</label>
+          <input 
+            type="color" 
+            id="teeColor" 
+            name="teeColor" 
+            value="#ffffff" 
+            required
+          >
+        </div>
+        <button type="submit" class="save-btn">Add Course</button>
+      </form>
+      <div id="courseMessage"></div>
+    </div>
+  </main>
+  <script src="courses.js"></script>
+</body>
+</html>

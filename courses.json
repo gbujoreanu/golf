@@ -1,0 +1,37 @@
+[
+  {
+    "course": "Charwood",
+    "tee": "Green",
+    "rating": 67.8,
+    "slope": 126,
+    "teeColor": "#00FF00"
+  },
+  {
+    "course": "Charwood",
+    "tee": "Red",
+    "rating": 69.7,
+    "slope": 129,
+    "teeColor": "#FF0000"
+  },
+  {
+    "course": "Spur",
+    "tee": "Blue",
+    "rating": 71.9,
+    "slope": 122,
+    "teeColor": "#0000FF"
+  },
+  {
+    "course": "Spur",
+    "tee": "Back",
+    "rating": 70.4,
+    "slope": 118,
+    "teeColor": "#AAAAAA"
+  },
+  {
+    "course": "Charwood",
+    "tee": "Yellow",
+    "rating": 63.7,
+    "slope": 117,
+    "teeColor": "#dfe218"
+  }
+]
