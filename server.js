@@ -51,11 +51,10 @@ app.post('/add-rounds', (req, res) => {
   });
 });
 
-// When running locally, listen on PORT; otherwise, export the app (for Vercel)
+// When running locally, start the server
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
   });
 }
 module.exports = app;
-

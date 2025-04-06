@@ -65,6 +65,14 @@ main h1 {
   margin-right: 1rem;
   border-radius: 4px;
   border: 1px solid #3b3f53;
+  background-color: #1d1e26;
+  color: #e0e0e0;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.filter-section input:focus,
+.filter-section select:focus {
+  border-color: #4a90e2;
 }
 .filter-section button {
   padding: 0.3rem 0.8rem;
@@ -185,6 +193,11 @@ main h1 {
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  outline: none;
+}
+.generate-row-bar select:focus,
+.generate-row-bar button:focus {
+  border-color: #4a90e2;
 }
 .generate-row-bar button:hover {
   background-color: #3a3f53;
@@ -228,6 +241,44 @@ main h1 {
   text-align: center;
   padding: 0.3rem;
   font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+/* Remove default spin buttons in Chrome/WebKit */
+.hole-input::-webkit-outer-spin-button,
+.hole-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.hole-input:focus {
+  border-color: #4a90e2;
+}
+
+/* Date & Text Inputs in the Table */
+input[type="text"],
+input[type="date"] {
+  background-color: #1d1e26;
+  color: #e0e0e0;
+  border: 1px solid #3b3f53;
+  border-radius: 4px;
+  outline: none;
+  padding: 0.3rem;
+  transition: border-color 0.2s ease;
+}
+input[type="text"]:focus,
+input[type="date"]:focus {
+  border-color: #4a90e2;
+}
+
+/* Placeholder Styles */
+::placeholder {
+  color: #888;
+  opacity: 1;
+}
+
+/* Date Picker Icon Adjustment for Dark Background */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
 }
 
 /* Save Rounds Button */
@@ -245,10 +296,14 @@ main h1 {
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.1s ease;
+  outline: none;
 }
 .save-btn:hover {
   background-color: #3a78c2;
   transform: scale(1.03);
+}
+.save-btn:focus {
+  border: 2px solid #4a90e2;
 }
 
 /* Responsive Adjustments */
