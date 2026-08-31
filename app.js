@@ -58,6 +58,8 @@ const elements = {
   courseLibrary: document.getElementById("courseLibrary"),
   exportButton: document.getElementById("exportButton"),
   importInput: document.getElementById("importInput"),
+  backupHelpButton: document.getElementById("backupHelpButton"),
+  backupHelpDialog: document.getElementById("backupHelpDialog"),
   resetButton: document.getElementById("resetButton")
 };
 
@@ -117,6 +119,7 @@ function bindEvents() {
   elements.roundHistory.addEventListener("click", handleRoundAction);
   elements.exportButton.addEventListener("click", exportData);
   elements.importInput.addEventListener("change", importData);
+  elements.backupHelpButton.addEventListener("click", () => elements.backupHelpDialog.showModal());
   elements.resetButton.addEventListener("click", resetData);
 }
 

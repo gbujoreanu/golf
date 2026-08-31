@@ -19,8 +19,23 @@
       <button class="button ghost compact" id="exportButton" type="button">Export</button>
       <label class="button ghost compact" for="importInput">Import</label>
       <input id="importInput" class="visually-hidden" type="file" accept="application/json">
+      <button class="backup-help" id="backupHelpButton" type="button" aria-label="How import and export work">?</button>
     </div>
   </header>
+
+  <dialog class="help-dialog" id="backupHelpDialog" aria-labelledby="backupHelpTitle">
+    <form method="dialog">
+      <div class="dialog-heading">
+        <div><p class="eyebrow">Your data</p><h2 id="backupHelpTitle">Import and export</h2></div>
+        <button class="dialog-close" type="submit" aria-label="Close help">×</button>
+      </div>
+      <p>Your rounds and courses stay saved in this browser on this device—even after you close the tab or restart the computer.</p>
+      <div class="help-step"><strong>Export</strong><span>Downloads a JSON backup containing all saved rounds and custom courses.</span></div>
+      <div class="help-step"><strong>Import</strong><span>Choose a Fairway Log JSON backup to restore or move your data to another browser or device.</span></div>
+      <p class="dialog-note">Export before clearing browser data, using another browser, or changing devices. Private browsing may remove data when the private session ends.</p>
+      <button class="button primary" type="submit">Got it</button>
+    </form>
+  </dialog>
 
   <div class="app-layout">
     <nav class="side-nav" aria-label="Application navigation">
