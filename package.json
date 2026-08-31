@@ -1,17 +1,11 @@
 {
-  "name": "golf-2.0",
-  "version": "1.0.0",
-  "main": "main.js",
+  "name": "fairway-log",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A browser-based golf score, course, average, and handicap tracker.",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "express": "^5.1.0",
-    "sqlite3": "^5.1.7"
+    "test": "node --test",
+    "start": "npx serve ."
   }
 }

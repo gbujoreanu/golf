@@ -1,187 +1,139 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Golf Scorecard</title>
+  <meta name="theme-color" content="#10251d">
+  <meta name="description" content="Fairway Log - a private, browser-based golf score and handicap tracker.">
+  <title>Fairway Log</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <nav>
-    <ul>
-      <li><a href="index.html">Enter Scores</a></li>
-      <li><a href="handicap.html">View Handicaps</a></li>
-      <li><a href="courses.html">Manage Courses</a></li> <!-- NEW LINK -->
-    </ul>
-  </nav>
-  <main>
-    <h1>Scorecards</h1>
-    
-    <!-- Filter Section -->
-    <div id="filterSection" class="filter-section">
-      <label for="filterName">Name:</label>
-      <input type="text" id="filterName" placeholder="Filter by name">
-      
-      <label for="filterCourse">Course:</label>
-      <input type="text" id="filterCourse" placeholder="Filter by course">
-      
-      <label for="filterTee">Tee:</label>
-      <select id="filterTee">
-        <option value="">All</option>
-        <option value="Green">Green</option>
-        <option value="White">White</option>
-        <option value="Blue">Blue</option>
-        <option value="Back">Back</option>
-      </select>
-      
-      <button id="clearFiltersBtn">Clear Filters</button>
+  <header class="app-header">
+    <a class="brand" href="#dashboard" data-view-link="dashboard" aria-label="Fairway Log dashboard">
+      <span class="brand-mark" aria-hidden="true">FL</span>
+      <span><strong>Fairway Log</strong><small>Your rounds, clearly tracked.</small></span>
+    </a>
+    <div class="header-actions">
+      <span class="privacy-badge">Stored on this device</span>
+      <button class="button ghost compact" id="exportButton" type="button">Export</button>
+      <label class="button ghost compact" for="importInput">Import</label>
+      <input id="importInput" class="visually-hidden" type="file" accept="application/json">
     </div>
-    
-    <!-- Existing Scoreboard Table -->
-    <div class="table-scroll scoreboard-container">
-      <table id="scorecardTable" class="scorecard">
-        <colgroup>
-          <col style="width:150px;">  <!-- Name -->
-          <!-- Front 9 holes -->
-          <col style="width:40px;"><col style="width:40px;"><col style="width:40px;"><col style="width:40px;">
-          <col style="width:40px;"><col style="width:40px;"><col style="width:40px;"><col style="width:40px;">
-          <col style="width:40px;">
-          <col style="width:50px;">    <!-- F9 -->
-          <!-- Back 9 holes -->
-          <col style="width:40px;"><col style="width:40px;"><col style="width:40px;"><col style="width:40px;">
-          <col style="width:40px;"><col style="width:40px;"><col style="width:40px;"><col style="width:40px;">
-          <col style="width:40px;">
-          <col style="width:50px;">    <!-- B9 -->
-          <col style="width:60px;">    <!-- Total -->
-          <col style="width:120px;">   <!-- Date -->
-          <col style="width:150px;">   <!-- Course -->
-          <col style="width:100px;">   <!-- Tee -->
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th colspan="9">Front 9</th>
-            <th>F9</th>
-            <th colspan="9">Back 9</th>
-            <th>B9</th>
-            <th>Total</th>
-            <th>Date</th>
-            <th>Course</th>
-            <th>Tee</th>
-          </tr>
-          <tr>
-            <th></th>
-            <!-- Holes 1-9 -->
-            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
-            <th>6</th><th>7</th><th>8</th><th>9</th>
-            <th></th>
-            <!-- Holes 10-18 -->
-            <th>10</th><th>11</th><th>12</th><th>13</th><th>14</th>
-            <th>15</th><th>16</th><th>17</th><th>18</th>
-            <th></th><th></th><th></th><th></th><th></th>
-          </tr>
-        </thead>
-        <tbody id="scorecardBody"></tbody>
-      </table>
-    </div>
-    
-    <!-- Add New Rounds Section -->
-    <div id="newRoundsSection" class="new-rounds-container">
-      <h2>Add New Rounds</h2>
-      <div class="generate-row-bar">
-        <label for="numRows">Number of Rounds to Add:</label>
-        <select id="numRows">
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-        </select>
-        <button id="generateRowsBtn">Generate Input Rows</button>
-      </div>
-      <form id="newRoundsForm">
-        <div class="table-scroll">
-          <table id="newRoundsTable" class="scorecard input-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Date</th>
-                <th>Course</th>
-                <th>Tee</th>
-                <!-- Front 9 holes -->
-                <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
-                <th>6</th><th>7</th><th>8</th><th>9</th>
-                <th>F9</th>
-                <!-- Back 9 holes -->
-                <th>10</th><th>11</th><th>12</th><th>13</th><th>14</th>
-                <th>15</th><th>16</th><th>17</th><th>18</th>
-                <th>B9</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- New rows will be dynamically generated here -->
-            </tbody>
-          </table>
+  </header>
+
+  <div class="app-layout">
+    <nav class="side-nav" aria-label="Application navigation">
+      <button class="nav-button active" type="button" data-view="dashboard"><span>Overview</span><small>Stats and trends</small></button>
+      <button class="nav-button" type="button" data-view="new-round"><span>Add round</span><small>Enter 18 holes</small></button>
+      <button class="nav-button" type="button" data-view="rounds"><span>Round history</span><small>Scores and differentials</small></button>
+      <button class="nav-button" type="button" data-view="courses"><span>Courses</span><small>Rating, slope, and par</small></button>
+    </nav>
+
+    <main>
+      <section class="view active" id="dashboard" data-view-panel="dashboard">
+        <div class="page-heading dashboard-heading">
+          <div>
+            <p class="eyebrow">Season overview</p>
+            <h1>Play the round.<br>Know the trend.</h1>
+            <p class="lede">Track scores, compare recent form, and estimate your Handicap Index using the rating and slope from the tees you played.</p>
+          </div>
+          <label class="field player-filter">Player
+            <select id="dashboardPlayer"></select>
+          </label>
         </div>
-        <button type="submit" class="save-btn">Save Rounds</button>
-      </form>
-    </div>
-  </main>
-  
-  <!-- Include main.js -->
-  <script src="main.js"></script>
-  <!-- Additional script for dynamic Course and Tee dropdowns -->
-  <script>
-    // Load courses from courses.json
-    function loadCourses() {
-      return fetch('courses.json')
-        .then(response => response.json());
-    }
-    // Populate the Tee dropdown based on the course object
-    function populateTeeSelect(teeSelect, courseObj) {
-      teeSelect.innerHTML = "";
-      courseObj.tees.forEach(teeObj => {
-        const opt = document.createElement("option");
-        opt.value = teeObj.tee;
-        opt.textContent = teeObj.tee;
-        teeSelect.appendChild(opt);
-      });
-    }
-    // When rows are generated, replace the Course input with a dropdown
-    document.addEventListener("click", (e) => {
-      if (e.target && e.target.id === "generateRowsBtn") {
-        // Delay to allow new rows to be added by main.js
-        setTimeout(() => {
-          loadCourses().then(courses => {
-            const rows = document.querySelectorAll("#newRoundsTable tbody tr");
-            rows.forEach(row => {
-              // Replace the Course input with a dropdown
-              const courseCell = row.children[2];
-              const oldCourseInput = courseCell.querySelector("input[name='course']");
-              const courseSelect = document.createElement("select");
-              courseSelect.name = "course";
-              courseSelect.required = true;
-              courses.forEach(courseObj => {
-                const option = document.createElement("option");
-                option.value = courseObj.course;
-                option.textContent = courseObj.course;
-                courseSelect.appendChild(option);
-              });
-              courseCell.replaceChild(courseSelect, oldCourseInput);
-              
-              // Setup Tee dropdown: when the course changes, update the Tee options
-              const teeSelect = row.querySelector("select[name='tee']");
-              courseSelect.addEventListener("change", () => {
-                const selectedCourse = courses.find(c => c.course === courseSelect.value);
-                populateTeeSelect(teeSelect, selectedCourse);
-              });
-              // Trigger change event to load initial Tee options
-              courseSelect.dispatchEvent(new Event("change"));
-            });
-          }).catch(err => console.error("Error loading courses:", err));
-        }, 100);
-      }
-    });
-  </script>
+
+        <div class="stat-grid" aria-live="polite">
+          <article class="stat-card featured"><span>Handicap estimate</span><strong id="handicapStat">—</strong><small id="handicapDetail">Add 3 rated rounds</small></article>
+          <article class="stat-card"><span>Scoring average</span><strong id="averageStat">—</strong><small>All tracked rounds</small></article>
+          <article class="stat-card"><span>Last 5 average</span><strong id="recentAverageStat">—</strong><small>Recent form</small></article>
+          <article class="stat-card"><span>Personal best</span><strong id="bestStat">—</strong><small id="bestDetail">No rounds yet</small></article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel trend-panel">
+            <div class="panel-heading"><div><p class="eyebrow">Trend</p><h2>Recent scoring</h2></div><span id="toParAverage" class="metric-chip">— avg to par</span></div>
+            <div id="trendChart" class="trend-chart" aria-label="Recent score trend"></div>
+          </article>
+          <article class="panel next-round-panel">
+            <p class="eyebrow">Ready to play?</p>
+            <h2>Log your next round.</h2>
+            <p>Choose a course and tee, enter each hole, and Fairway Log handles the totals and differential.</p>
+            <button class="button primary" type="button" data-go-to="new-round">Add a round</button>
+          </article>
+        </div>
+
+        <article class="panel recent-panel">
+          <div class="panel-heading"><div><p class="eyebrow">Latest</p><h2>Recent rounds</h2></div><button class="text-button" type="button" data-go-to="rounds">View all</button></div>
+          <div id="recentRounds" class="round-list empty-state"></div>
+        </article>
+      </section>
+
+      <section class="view" id="new-round" data-view-panel="new-round">
+        <div class="page-heading compact-heading"><div><p class="eyebrow">New round</p><h1>Enter your scorecard.</h1><p class="lede">All 18 holes are required. Totals and score differential update as you type.</p></div></div>
+        <form id="roundForm" class="panel form-panel">
+          <div class="form-grid round-meta-grid">
+            <label class="field">Player name<input id="playerName" name="playerName" autocomplete="name" required placeholder="George"></label>
+            <label class="field">Date<input id="roundDate" name="roundDate" type="date" required></label>
+            <label class="field">Course<select id="roundCourse" required></select></label>
+            <label class="field">Tee<select id="roundTee" required></select></label>
+            <label class="field">PCC adjustment <span class="help" title="Usually zero; official PCC ranges from -1 to +3.">?</span><input id="roundPcc" type="number" min="-1" max="3" step="1" value="0"></label>
+          </div>
+
+          <div class="round-summary" aria-live="polite">
+            <div><span>Front 9</span><strong id="frontTotal">0</strong></div>
+            <div><span>Back 9</span><strong id="backTotal">0</strong></div>
+            <div><span>Total</span><strong id="roundTotal">0</strong></div>
+            <div><span>To par</span><strong id="roundToPar">—</strong></div>
+            <div><span>Differential</span><strong id="roundDifferential">—</strong></div>
+          </div>
+
+          <div class="scorecard-header"><div><p class="eyebrow">Scorecard</p><h2>Hole-by-hole score</h2></div><button id="clearScores" class="text-button" type="button">Clear scores</button></div>
+          <div id="holeGrid" class="hole-grid"></div>
+          <p id="roundMessage" class="form-message" role="status"></p>
+          <div class="form-actions"><button class="button primary" type="submit">Save round</button></div>
+        </form>
+      </section>
+
+      <section class="view" id="rounds" data-view-panel="rounds">
+        <div class="page-heading compact-heading"><div><p class="eyebrow">Round history</p><h1>Every round, one record.</h1><p class="lede">Filter by player or course and see how difficulty-adjusted performance compares.</p></div></div>
+        <div class="panel toolbar">
+          <label class="field">Player<select id="roundsPlayerFilter"></select></label>
+          <label class="field">Course<select id="roundsCourseFilter"></select></label>
+          <button class="button ghost" id="clearRoundFilters" type="button">Clear filters</button>
+        </div>
+        <div id="roundHistory" class="history-list empty-state"></div>
+      </section>
+
+      <section class="view" id="courses" data-view-panel="courses">
+        <div class="page-heading compact-heading"><div><p class="eyebrow">Course library</p><h1>Set up the tees you play.</h1><p class="lede">Course Rating and Slope Rating are required for meaningful differentials. Use the values printed on the scorecard.</p></div></div>
+        <div class="courses-layout">
+          <form id="courseForm" class="panel form-panel">
+            <div class="panel-heading"><div><p class="eyebrow">Add a tee</p><h2>Course details</h2></div></div>
+            <div class="form-grid">
+              <label class="field full">Course name<input id="courseName" required placeholder="Bobby Jones Golf Course"></label>
+              <label class="field">Tee name<input id="teeName" required placeholder="White"></label>
+              <label class="field">Par<input id="coursePar" type="number" min="54" max="90" value="72" required></label>
+              <label class="field">Course Rating<input id="courseRating" type="number" min="50" max="90" step="0.1" placeholder="70.8" required></label>
+              <label class="field">Slope Rating<input id="courseSlope" type="number" min="55" max="155" placeholder="126" required></label>
+            </div>
+            <p id="courseMessage" class="form-message" role="status"></p>
+            <button class="button primary" type="submit">Save course tee</button>
+          </form>
+          <div class="panel course-library-panel">
+            <div class="panel-heading"><div><p class="eyebrow">Saved</p><h2>Your course library</h2></div></div>
+            <div id="courseLibrary" class="course-list"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="app-footer">
+    <p>Fairway Log stores data locally in your browser. Export a backup before clearing browser data or switching devices.</p>
+    <button id="resetButton" class="text-button danger" type="button">Reset all local data</button>
+  </footer>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
