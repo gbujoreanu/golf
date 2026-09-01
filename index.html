@@ -4,18 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#10251d">
-  <meta name="description" content="Fairway Log - a private, browser-based golf score and handicap tracker.">
+  <meta name="description" content="Fairway Log - a private, account-based golf score and handicap tracker.">
   <title>Fairway Log</title>
   <link rel="stylesheet" href="style.css?v=3">
 </head>
-<body>
+<body class="auth-pending">
   <header class="app-header">
     <a class="brand" href="#dashboard" data-view-link="dashboard" aria-label="Fairway Log dashboard">
       <span class="brand-mark" aria-hidden="true">FL</span>
       <span><strong>Fairway Log</strong><small>Your rounds, clearly tracked.</small></span>
     </a>
     <div class="header-actions">
-      <span class="privacy-badge">Stored on this device</span>
+      <span class="privacy-badge" id="storageStatus">Connecting securely…</span>
+      <button class="button ghost compact hidden" id="migrateButton" type="button">Move device data</button>
+      <button class="button ghost compact" id="signOutButton" type="button">Sign out</button>
       <button class="button ghost compact" id="exportButton" type="button">Export</button>
       <label class="button ghost compact" for="importInput">Import</label>
       <input id="importInput" class="visually-hidden" type="file" accept="application/json">
@@ -29,10 +31,10 @@
         <div><p class="eyebrow">Your data</p><h2 id="backupHelpTitle">Import and export</h2></div>
         <button class="dialog-close" type="submit" aria-label="Close help">×</button>
       </div>
-      <p>Your rounds and courses stay saved in this browser on this device—even after you close the tab or restart the computer.</p>
+      <p>Your rounds and courses are saved to your Supabase account and protected by per-user database access rules.</p>
       <div class="help-step"><strong>Export</strong><span>Downloads a JSON backup containing all saved rounds and custom courses.</span></div>
-      <div class="help-step"><strong>Import</strong><span>Choose a Fairway Log JSON backup to restore or move your data to another browser or device.</span></div>
-      <p class="dialog-note">Export before clearing browser data, using another browser, or changing devices. Private browsing may remove data when the private session ends.</p>
+      <div class="help-step"><strong>Import</strong><span>Restore a Fairway Log backup into an account without saved rounds.</span></div>
+      <p class="dialog-note">Older browser-only data can be moved into your account once. Your original local copy remains as a backup.</p>
       <button class="button primary" type="submit">Got it</button>
     </form>
   </dialog>
@@ -145,10 +147,12 @@
   </div>
 
   <footer class="app-footer">
-    <p>Fairway Log stores data locally in your browser. Export a backup before clearing browser data or switching devices.</p>
-    <button id="resetButton" class="text-button danger" type="button">Reset all local data</button>
+    <p>Fairway Log saves rounds and courses to your private account.</p>
+    <button id="resetButton" class="text-button danger" type="button">Reset account data</button>
   </footer>
 
-  <script type="module" src="app.js?v=2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js?v=1"></script>
+  <script type="module" src="app.js?v=3"></script>
 </body>
 </html>

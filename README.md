@@ -1,6 +1,6 @@
 # Fairway Log
 
-Fairway Log is a lightweight, browser-based golf score and handicap tracker. It stores everything locally in your browser, so there is no account or server to maintain.
+Fairway Log is a lightweight, account-based golf score and handicap tracker. Confirmed users share one Supabase login with Daymark while keeping their records private from every other account.
 
 ## Features
 
@@ -33,7 +33,7 @@ npm test
 
 ## Data and handicap notes
 
-Rounds and custom courses are saved in browser `localStorage`. Use **Export backup** before clearing browser data or changing devices.
+Rounds and custom courses are saved in Supabase tables protected by Row Level Security. The legacy `fairway-log-v2` browser record is read only as an optional one-time migration source. JSON export remains available for personal backups.
 
 The displayed Handicap Index is an estimate for personal tracking, not an official GHIN Handicap Index. The app supports Course Rating, Slope Rating, and manual PCC entry, but does not currently apply hole-by-hole Net Double Bogey adjustments, exceptional score reductions, or handicap caps.
 

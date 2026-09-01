@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "A browser-based golf score, course, average, and handicap tracker.",
+  "description": "An account-based golf score, course, average, and handicap tracker.",
   "scripts": {
     "test": "node --test",
     "start": "npx serve ."

@@ -413,3 +413,4 @@ h3 { margin-bottom: 4px; }
   html { scroll-behavior: auto; }
   .view.active { animation: none; }
 }
+.auth-pending{visibility:hidden}.hidden{display:none!important}.privacy-badge.sync-error{border-color:#b84a42;color:#ffb5af}

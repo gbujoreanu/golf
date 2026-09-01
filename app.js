@@ -8,13 +8,16 @@ import {
 } from "./calculations.js";
 
 const STORAGE_KEY = "fairway-log-v2";
+const cloudClient = window.AppAuth?.client || null;
 const defaultCourses = [
   { id: "charwood-green", course: "Charwood", tee: "Green", par: 72, rating: 67.8, slope: 126 },
   { id: "charwood-red", course: "Charwood", tee: "Red", par: 72, rating: 69.7, slope: 129 },
   { id: "spur-blue", course: "Spur at Northwoods", tee: "Blue", par: 72, rating: 71.9, slope: 122 }
 ];
 
-let state = loadState();
+const legacyState = loadLegacyState();
+let state = { courses: [], rounds: [] };
+let currentUser = null;
 let activeView = "dashboard";
 
 const elements = {
@@ -60,30 +63,51 @@ const elements = {
   importInput: document.getElementById("importInput"),
   backupHelpButton: document.getElementById("backupHelpButton"),
   backupHelpDialog: document.getElementById("backupHelpDialog"),
-  resetButton: document.getElementById("resetButton")
+  resetButton: document.getElementById("resetButton"),
+  storageStatus: document.getElementById("storageStatus"),
+  migrateButton: document.getElementById("migrateButton"),
+  signOutButton: document.getElementById("signOutButton")
 };
 
 initialize();
 
-function initialize() {
+async function initialize() {
   createHoleInputs();
   elements.roundDate.value = new Date().toISOString().slice(0, 10);
   bindEvents();
-  renderAll();
+  if (!cloudClient) return redirectToLogin();
+  cloudClient.auth.onAuthStateChange((_event, session) => setTimeout(async () => {
+    if (session?.user && !session.user.email_confirmed_at) await cloudClient.auth.signOut();
+    if (!session || !session.user.email_confirmed_at) redirectToLogin();
+  }, 0));
+  const { data, error } = await cloudClient.auth.getSession();
+  if (error || !data.session || !data.session.user.email_confirmed_at) return redirectToLogin();
+  currentUser = data.session.user;
+  try {
+    state = await loadCloudState();
+    if (!state.courses.length) {
+      const rows = defaultCourses.map(toCloudCourse);
+      const { error: seedError } = await cloudClient.from('golf_courses').upsert(rows, { onConflict:'user_id,id' });
+      if (seedError) throw seedError;
+      state.courses = defaultCourses.map((course) => ({ ...course }));
+    }
+    elements.storageStatus.textContent = `Cloud · ${currentUser.email || 'signed in'}`;
+    elements.migrateButton.classList.toggle('hidden', !legacyState);
+    document.body.classList.remove('auth-pending');
+    renderAll();
+  } catch (loadError) {
+    console.error(loadError); elements.storageStatus.textContent = 'Cloud load failed'; elements.storageStatus.classList.add('sync-error');
+  }
 }
 
-function loadState() {
+function loadLegacyState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (saved && Array.isArray(saved.courses) && Array.isArray(saved.rounds)) return saved;
   } catch (error) {
     console.warn("Could not read saved Fairway Log data.", error);
   }
-  return { courses: defaultCourses.map((course) => ({ ...course })), rounds: [] };
-}
-
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  return null;
 }
 
 function bindEvents() {
@@ -121,6 +145,38 @@ function bindEvents() {
   elements.importInput.addEventListener("change", importData);
   elements.backupHelpButton.addEventListener("click", () => elements.backupHelpDialog.showModal());
   elements.resetButton.addEventListener("click", resetData);
+  elements.migrateButton.addEventListener("click", migrateLegacyData);
+  elements.signOutButton.addEventListener("click", () => cloudClient.auth.signOut());
+}
+
+function redirectToLogin() { location.replace(`${location.origin}/account/?returnTo=/golf/`); }
+
+async function loadCloudState() {
+  const [coursesResult, roundsResult] = await Promise.all([
+    cloudClient.from('golf_courses').select('*').order('course'),
+    cloudClient.from('golf_rounds').select('*').order('played_on')
+  ]);
+  const error = coursesResult.error || roundsResult.error;
+  if (error) throw error;
+  return { courses:coursesResult.data.map(fromCloudCourse), rounds:roundsResult.data.map(fromCloudRound) };
+}
+function fromCloudCourse(row){return{id:row.id,course:row.course,tee:row.tee,par:Number(row.par),rating:Number(row.rating),slope:Number(row.slope)}}
+function fromCloudRound(row){return{id:row.id,player:row.player,date:row.played_on,course:row.course,tee:row.tee,par:Number(row.par),courseRating:Number(row.course_rating),slope:Number(row.slope),pcc:Number(row.pcc),holes:row.holes.map(Number),front:Number(row.front),back:Number(row.back),total:Number(row.total),differential:Number(row.differential)}}
+function toCloudCourse(item){return{id:item.id,user_id:currentUser.id,course:item.course,tee:item.tee,par:Number(item.par),rating:Number(item.rating),slope:Number(item.slope)}}
+function toCloudRound(item){return{id:item.id,user_id:currentUser.id,player:item.player,played_on:item.date,course:item.course,tee:item.tee,par:Number(item.par),course_rating:Number(item.courseRating),slope:Number(item.slope),pcc:Number(item.pcc)||0,holes:item.holes.map(Number),front:Number(item.front),back:Number(item.back),total:Number(item.total),differential:Number(item.differential)}}
+async function saveCloud(table,row){elements.storageStatus.textContent='Saving…';const{error}=await cloudClient.from(table).upsert(row,{onConflict:'user_id,id'});if(error)throw error;elements.storageStatus.textContent=`Cloud · ${currentUser.email||'signed in'}`}
+async function deleteCloud(table,id){const{error}=await cloudClient.from(table).delete().eq('user_id',currentUser.id).eq('id',id);if(error)throw error}
+
+async function migrateLegacyData(){
+  if(!legacyState||!confirm('Move the rounds and courses saved in this browser into your account? The browser copy will be kept as a backup.'))return;
+  elements.migrateButton.disabled=true;
+  try{
+    const courses=legacyState.courses.map(toCloudCourse),rounds=legacyState.rounds.map(toCloudRound);
+    if(courses.length){const{error}=await cloudClient.from('golf_courses').upsert(courses,{onConflict:'user_id,id'});if(error)throw error}
+    if(rounds.length){const{error}=await cloudClient.from('golf_rounds').upsert(rounds,{onConflict:'user_id,id'});if(error)throw error}
+    state=await loadCloudState();elements.migrateButton.classList.add('hidden');renderAll();alert('Your Golf data is now saved to your account.');
+  }catch(error){console.error(error);alert('The migration did not finish. Your browser copy is still safe.');}
+  finally{elements.migrateButton.disabled=false}
 }
 
 function showView(viewName) {
@@ -204,7 +260,7 @@ function updateRoundSummary() {
   elements.roundDifferential.textContent = total && tee ? scoreDifferential(total, tee.rating, tee.slope, elements.roundPcc.value) : "—";
 }
 
-function saveRound(event) {
+async function saveRound(event) {
   event.preventDefault();
   const holes = getHoleScores();
   const tee = selectedTee();
@@ -232,8 +288,9 @@ function saveRound(event) {
     total,
     differential: scoreDifferential(total, tee.rating, tee.slope, elements.roundPcc.value)
   };
+  try { await saveCloud('golf_rounds',toCloudRound(round)); }
+  catch(error) { console.error(error); showMessage(elements.roundMessage,'That round could not be saved. Please try again.',true); return; }
   state.rounds.push(round);
-  saveState();
   elements.roundForm.reset();
   elements.playerName.value = player;
   elements.roundDate.value = new Date().toISOString().slice(0, 10);
@@ -244,7 +301,7 @@ function saveRound(event) {
   showMessage(elements.roundMessage, `Saved ${player}'s ${total} at ${tee.course}.`);
 }
 
-function saveCourse(event) {
+async function saveCourse(event) {
   event.preventDefault();
   const course = elements.courseName.value.trim();
   const tee = elements.teeName.value.trim();
@@ -259,8 +316,10 @@ function saveCourse(event) {
     return;
   }
 
-  state.courses.push({ id: `${slugify(course)}-${slugify(tee)}-${Date.now()}`, course, tee, par, rating, slope });
-  saveState();
+  const savedCourse={ id:`${slugify(course)}-${slugify(tee)}-${Date.now()}`,course,tee,par,rating,slope };
+  try { await saveCloud('golf_courses',toCloudCourse(savedCourse)); }
+  catch(error) { console.error(error); showMessage(elements.courseMessage,'That course could not be saved. Please try again.',true); return; }
+  state.courses.push(savedCourse);
   elements.courseForm.reset();
   elements.coursePar.value = 72;
   renderAll();
@@ -355,24 +414,26 @@ function renderCourseLibrary() {
   `).join("");
 }
 
-function handleCourseAction(event) {
+async function handleCourseAction(event) {
   const button = event.target.closest("[data-delete-course]");
   if (!button) return;
   const id = button.dataset.deleteCourse;
   const tee = state.courses.find((course) => course.id === id);
   if (!tee || !confirm(`Delete ${tee.course} · ${tee.tee}? Existing rounds will keep their saved ratings.`)) return;
+  try { await deleteCloud('golf_courses',id); }
+  catch(error) { console.error(error); alert('That course could not be deleted.'); return; }
   state.courses = state.courses.filter((course) => course.id !== id);
-  saveState();
   renderAll();
 }
 
-function handleRoundAction(event) {
+async function handleRoundAction(event) {
   const button = event.target.closest("[data-delete-round]");
   if (!button) return;
   const round = state.rounds.find((item) => item.id === button.dataset.deleteRound);
   if (!round || !confirm(`Delete the ${round.total} at ${round.course}?`)) return;
+  try { await deleteCloud('golf_rounds',round.id); }
+  catch(error) { console.error(error); alert('That round could not be deleted.'); return; }
   state.rounds = state.rounds.filter((item) => item.id !== round.id);
-  saveState();
   renderAll();
 }
 
@@ -391,23 +452,27 @@ async function importData(event) {
   try {
     const imported = JSON.parse(await file.text());
     if (!Array.isArray(imported.courses) || !Array.isArray(imported.rounds)) throw new Error("Invalid backup format");
-    state = { courses: imported.courses, rounds: imported.rounds };
-    saveState();
+    if(state.rounds.length) throw new Error('Account already contains rounds');
+    const courses=imported.courses.map(toCloudCourse),rounds=imported.rounds.map(toCloudRound);
+    if(courses.length){const{error}=await cloudClient.from('golf_courses').upsert(courses,{onConflict:'user_id,id'});if(error)throw error}
+    if(rounds.length){const{error}=await cloudClient.from('golf_rounds').upsert(rounds,{onConflict:'user_id,id'});if(error)throw error}
+    state=await loadCloudState();
     renderAll();
     showView("dashboard");
   } catch (error) {
-    alert("That file is not a valid Fairway Log backup.");
+    alert(error.message==='Account already contains rounds'?'Import is available only before rounds are saved, preventing accidental overwrites.':'That file could not be imported into your account.');
   } finally {
     event.target.value = "";
   }
 }
 
-function resetData() {
-  if (!confirm("Reset every locally saved round and course? Export a backup first if you may need this data.")) return;
-  state = { courses: defaultCourses.map((course) => ({ ...course })), rounds: [] };
-  saveState();
-  renderAll();
-  showView("dashboard");
+async function resetData() {
+  if (!confirm("Reset every round and course in your account? Export a backup first if you may need this data.")) return;
+  try{
+    for(const table of ['golf_rounds','golf_courses']){const{error}=await cloudClient.from(table).delete().eq('user_id',currentUser.id);if(error)throw error}
+    const courses=defaultCourses.map(toCloudCourse);const{error}=await cloudClient.from('golf_courses').insert(courses);if(error)throw error;
+    state={courses:defaultCourses.map((course)=>({...course})),rounds:[]};renderAll();showView('dashboard');
+  }catch(error){console.error(error);alert('Your account data could not be reset.');}
 }
 
 function showMessage(element, message, isError = false) {
