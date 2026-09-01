@@ -4,16 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#10251d">
-  <meta name="description" content="Fairway Log - a private, account-based golf score and handicap tracker.">
-  <title>Fairway Log</title>
-  <link rel="stylesheet" href="style.css?v=4">
+  <meta name="description" content="Fairway - a private, account-based golf score and handicap tracker.">
+  <title>Fairway</title>
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body class="auth-pending">
   <header class="app-header">
     <div class="app-header-inner">
-      <a class="brand" href="#dashboard" data-view-link="dashboard" aria-label="Fairway Log dashboard">
-        <span class="brand-mark" aria-hidden="true">FL</span>
-        <span><strong>Fairway Log</strong><small>Your rounds, clearly tracked.</small></span>
+      <a class="brand" href="#dashboard" data-view-link="dashboard" aria-label="Fairway dashboard">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span><strong>Fairway</strong><small>Golf scores and handicap trends.</small></span>
       </a>
       <div class="header-actions">
         <span class="privacy-badge" id="storageStatus">Connecting securely…</span>
@@ -59,7 +59,7 @@
           <article class="panel next-round-panel">
             <p class="eyebrow">Ready to play?</p>
             <h2>Log your next round.</h2>
-            <p>Choose a course and tee, enter each hole, and Fairway Log handles the totals and differential.</p>
+            <p>Choose a course and tee, enter each hole, and Fairway handles the totals and differential.</p>
             <button class="button primary" type="button" data-go-to="new-round">Add a round</button>
           </article>
         </div>
@@ -131,12 +131,12 @@
   </div>
 
   <footer class="app-footer">
-    <p>Fairway Log saves rounds and courses to your private account.</p>
+    <p>Fairway saves rounds and courses to your private account.</p>
     <button id="resetButton" class="text-button danger" type="button">Reset account data</button>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js?v=1"></script>
-  <script type="module" src="app.js?v=4"></script>
+  <script type="module" src="app.js?v=5"></script>
 </body>
 </html>
