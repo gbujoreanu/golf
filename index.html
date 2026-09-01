@@ -6,38 +6,22 @@
   <meta name="theme-color" content="#10251d">
   <meta name="description" content="Fairway Log - a private, account-based golf score and handicap tracker.">
   <title>Fairway Log</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body class="auth-pending">
   <header class="app-header">
-    <a class="brand" href="#dashboard" data-view-link="dashboard" aria-label="Fairway Log dashboard">
-      <span class="brand-mark" aria-hidden="true">FL</span>
-      <span><strong>Fairway Log</strong><small>Your rounds, clearly tracked.</small></span>
-    </a>
-    <div class="header-actions">
-      <span class="privacy-badge" id="storageStatus">Connecting securely…</span>
-      <button class="button ghost compact hidden" id="migrateButton" type="button">Move device data</button>
-      <button class="button ghost compact" id="signOutButton" type="button">Sign out</button>
-      <button class="button ghost compact" id="exportButton" type="button">Export</button>
-      <label class="button ghost compact" for="importInput">Import</label>
-      <input id="importInput" class="visually-hidden" type="file" accept="application/json">
-      <button class="backup-help" id="backupHelpButton" type="button" aria-label="How import and export work">?</button>
+    <div class="app-header-inner">
+      <a class="brand" href="#dashboard" data-view-link="dashboard" aria-label="Fairway Log dashboard">
+        <span class="brand-mark" aria-hidden="true">FL</span>
+        <span><strong>Fairway Log</strong><small>Your rounds, clearly tracked.</small></span>
+      </a>
+      <div class="header-actions">
+        <span class="privacy-badge" id="storageStatus">Connecting securely…</span>
+        <button class="button ghost compact hidden" id="migrateButton" type="button">Move device data</button>
+        <button class="button ghost compact" id="signOutButton" type="button">Sign out</button>
+      </div>
     </div>
   </header>
-
-  <dialog class="help-dialog" id="backupHelpDialog" aria-labelledby="backupHelpTitle">
-    <form method="dialog">
-      <div class="dialog-heading">
-        <div><p class="eyebrow">Your data</p><h2 id="backupHelpTitle">Import and export</h2></div>
-        <button class="dialog-close" type="submit" aria-label="Close help">×</button>
-      </div>
-      <p>Your rounds and courses are saved to your Supabase account and protected by per-user database access rules.</p>
-      <div class="help-step"><strong>Export</strong><span>Downloads a JSON backup containing all saved rounds and custom courses.</span></div>
-      <div class="help-step"><strong>Import</strong><span>Restore a Fairway Log backup into an account without saved rounds.</span></div>
-      <p class="dialog-note">Older browser-only data can be moved into your account once. Your original local copy remains as a backup.</p>
-      <button class="button primary" type="submit">Got it</button>
-    </form>
-  </dialog>
 
   <div class="app-layout">
     <nav class="side-nav" aria-label="Application navigation">
@@ -153,6 +137,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js?v=1"></script>
-  <script type="module" src="app.js?v=3"></script>
+  <script type="module" src="app.js?v=4"></script>
 </body>
 </html>

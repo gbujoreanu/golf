@@ -59,10 +59,6 @@ const elements = {
   courseSlope: document.getElementById("courseSlope"),
   courseMessage: document.getElementById("courseMessage"),
   courseLibrary: document.getElementById("courseLibrary"),
-  exportButton: document.getElementById("exportButton"),
-  importInput: document.getElementById("importInput"),
-  backupHelpButton: document.getElementById("backupHelpButton"),
-  backupHelpDialog: document.getElementById("backupHelpDialog"),
   resetButton: document.getElementById("resetButton"),
   storageStatus: document.getElementById("storageStatus"),
   migrateButton: document.getElementById("migrateButton"),
@@ -91,7 +87,7 @@ async function initialize() {
       if (seedError) throw seedError;
       state.courses = defaultCourses.map((course) => ({ ...course }));
     }
-    elements.storageStatus.textContent = `Cloud · ${currentUser.email || 'signed in'}`;
+    elements.storageStatus.textContent = `Cloud verified · ${currentUser.email || 'signed in'}`;
     elements.migrateButton.classList.toggle('hidden', !legacyState);
     document.body.classList.remove('auth-pending');
     renderAll();
@@ -141,9 +137,6 @@ function bindEvents() {
   elements.courseForm.addEventListener("submit", saveCourse);
   elements.courseLibrary.addEventListener("click", handleCourseAction);
   elements.roundHistory.addEventListener("click", handleRoundAction);
-  elements.exportButton.addEventListener("click", exportData);
-  elements.importInput.addEventListener("change", importData);
-  elements.backupHelpButton.addEventListener("click", () => elements.backupHelpDialog.showModal());
   elements.resetButton.addEventListener("click", resetData);
   elements.migrateButton.addEventListener("click", migrateLegacyData);
   elements.signOutButton.addEventListener("click", () => cloudClient.auth.signOut());
@@ -164,7 +157,7 @@ function fromCloudCourse(row){return{id:row.id,course:row.course,tee:row.tee,par
 function fromCloudRound(row){return{id:row.id,player:row.player,date:row.played_on,course:row.course,tee:row.tee,par:Number(row.par),courseRating:Number(row.course_rating),slope:Number(row.slope),pcc:Number(row.pcc),holes:row.holes.map(Number),front:Number(row.front),back:Number(row.back),total:Number(row.total),differential:Number(row.differential)}}
 function toCloudCourse(item){return{id:item.id,user_id:currentUser.id,course:item.course,tee:item.tee,par:Number(item.par),rating:Number(item.rating),slope:Number(item.slope)}}
 function toCloudRound(item){return{id:item.id,user_id:currentUser.id,player:item.player,played_on:item.date,course:item.course,tee:item.tee,par:Number(item.par),course_rating:Number(item.courseRating),slope:Number(item.slope),pcc:Number(item.pcc)||0,holes:item.holes.map(Number),front:Number(item.front),back:Number(item.back),total:Number(item.total),differential:Number(item.differential)}}
-async function saveCloud(table,row){elements.storageStatus.textContent='Saving…';const{error}=await cloudClient.from(table).upsert(row,{onConflict:'user_id,id'});if(error)throw error;elements.storageStatus.textContent=`Cloud · ${currentUser.email||'signed in'}`}
+async function saveCloud(table,row){elements.storageStatus.textContent='Saving…';const{error}=await cloudClient.from(table).upsert(row,{onConflict:'user_id,id'});if(error)throw error;elements.storageStatus.textContent=`Cloud verified · ${currentUser.email||'signed in'}`}
 async function deleteCloud(table,id){const{error}=await cloudClient.from(table).delete().eq('user_id',currentUser.id).eq('id',id);if(error)throw error}
 
 async function migrateLegacyData(){
@@ -437,37 +430,8 @@ async function handleRoundAction(event) {
   renderAll();
 }
 
-function exportData() {
-  const blob = new Blob([JSON.stringify({ ...state, exportedAt: new Date().toISOString() }, null, 2)], { type: "application/json" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `fairway-log-${new Date().toISOString().slice(0, 10)}.json`;
-  link.click();
-  URL.revokeObjectURL(link.href);
-}
-
-async function importData(event) {
-  const [file] = event.target.files;
-  if (!file) return;
-  try {
-    const imported = JSON.parse(await file.text());
-    if (!Array.isArray(imported.courses) || !Array.isArray(imported.rounds)) throw new Error("Invalid backup format");
-    if(state.rounds.length) throw new Error('Account already contains rounds');
-    const courses=imported.courses.map(toCloudCourse),rounds=imported.rounds.map(toCloudRound);
-    if(courses.length){const{error}=await cloudClient.from('golf_courses').upsert(courses,{onConflict:'user_id,id'});if(error)throw error}
-    if(rounds.length){const{error}=await cloudClient.from('golf_rounds').upsert(rounds,{onConflict:'user_id,id'});if(error)throw error}
-    state=await loadCloudState();
-    renderAll();
-    showView("dashboard");
-  } catch (error) {
-    alert(error.message==='Account already contains rounds'?'Import is available only before rounds are saved, preventing accidental overwrites.':'That file could not be imported into your account.');
-  } finally {
-    event.target.value = "";
-  }
-}
-
 async function resetData() {
-  if (!confirm("Reset every round and course in your account? Export a backup first if you may need this data.")) return;
+  if (!confirm("Permanently reset every round and course in your cloud account? This cannot be undone.")) return;
   try{
     for(const table of ['golf_rounds','golf_courses']){const{error}=await cloudClient.from(table).delete().eq('user_id',currentUser.id);if(error)throw error}
     const courses=defaultCourses.map(toCloudCourse);const{error}=await cloudClient.from('golf_courses').insert(courses);if(error)throw error;
