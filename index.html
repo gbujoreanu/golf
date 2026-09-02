@@ -8,6 +8,7 @@
   <title>Fairway</title>
   <script>try{const s=JSON.parse(localStorage.getItem('fairway-settings-v1')||'{}');const themes=['classic','clubhouse','links','twilight','caddie-black'];document.documentElement.dataset.theme=themes.includes(s.theme)?s.theme:'classic';document.documentElement.dataset.density=s.density==='compact'?'compact':'comfortable'}catch(e){document.documentElement.dataset.theme='classic';document.documentElement.dataset.density='comfortable'}</script>
   <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="/shared/app-switcher.css?v=1">
 </head>
 <body class="auth-pending">
   <header class="app-header">
@@ -17,6 +18,7 @@
         <span><strong>Fairway</strong><small>Golf scores and handicap trends.</small></span>
       </a>
       <div class="header-actions">
+        <div data-app-switcher="fairway"></div>
         <span class="privacy-badge" id="storageStatus">Connecting securely…</span>
         <button class="button ghost compact settings-trigger" id="settingsTrigger" type="button" aria-label="Open Fairway settings"><span aria-hidden="true">⚙</span><span>Settings</span></button>
       </div>
@@ -182,6 +184,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js?v=1"></script>
+  <script type="module" src="/shared/app-switcher.js?v=1"></script>
   <script type="module" src="app.js?v=6"></script>
 </body>
 </html>
