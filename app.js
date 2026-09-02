@@ -8,6 +8,9 @@ import {
 } from "./calculations.js";
 
 const STORAGE_KEY = "fairway-log-v2";
+const SETTINGS_KEY = "fairway-settings-v1";
+const FAIRWAY_THEMES = ['classic','clubhouse','links','twilight','caddie-black'];
+const DEFAULT_SETTINGS = { theme:'classic', density:'comfortable' };
 const cloudClient = window.AppAuth?.client || null;
 const defaultCourses = [
   { id: "charwood-green", course: "Charwood", tee: "Green", par: 72, rating: 67.8, slope: 126 },
@@ -19,6 +22,7 @@ const legacyState = loadLegacyState();
 let state = { courses: [], rounds: [] };
 let currentUser = null;
 let activeView = "dashboard";
+let settings = loadSettings();
 
 const elements = {
   navButtons: [...document.querySelectorAll("[data-view]")],
@@ -62,12 +66,17 @@ const elements = {
   resetButton: document.getElementById("resetButton"),
   storageStatus: document.getElementById("storageStatus"),
   migrateButton: document.getElementById("migrateButton"),
-  signOutButton: document.getElementById("signOutButton")
+  signOutButton: document.getElementById("signOutButton"),
+  settingsTrigger: document.getElementById("settingsTrigger"),
+  settingsModal: document.getElementById("settingsModal"),
+  settingsEmail: document.getElementById("settingsEmail"),
+  settingsCloud: document.getElementById("settingsCloud")
 };
 
 initialize();
 
 async function initialize() {
+  applySettings();
   createHoleInputs();
   elements.roundDate.value = new Date().toISOString().slice(0, 10);
   bindEvents();
@@ -140,6 +149,37 @@ function bindEvents() {
   elements.resetButton.addEventListener("click", resetData);
   elements.migrateButton.addEventListener("click", migrateLegacyData);
   elements.signOutButton.addEventListener("click", () => cloudClient.auth.signOut());
+  elements.settingsTrigger.addEventListener('click', openSettings);
+  document.getElementById('closeSettings').addEventListener('click', () => elements.settingsModal.close());
+  document.querySelectorAll('[data-settings-open]').forEach((button) => button.addEventListener('click', () => showSettingsPanel(button.dataset.settingsOpen)));
+  document.querySelectorAll('[data-settings-back]').forEach((button) => button.addEventListener('click', () => showSettingsPanel('main')));
+  elements.settingsModal.addEventListener('close', () => showSettingsPanel('main', false));
+  elements.settingsModal.addEventListener('change', saveSettingsFromControls);
+}
+
+function loadSettings(){
+  try{const saved=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');return{theme:FAIRWAY_THEMES.includes(saved.theme)?saved.theme:'classic',density:saved.density==='compact'?'compact':'comfortable'}}
+  catch(error){return{...DEFAULT_SETTINGS}}
+}
+function applySettings(){
+  document.documentElement.dataset.theme=settings.theme;document.documentElement.dataset.density=settings.density;
+  const colors={classic:'#10251d',clubhouse:'#263b2f',links:'#eaf4f4',twilight:'#091722','caddie-black':'#070908'};
+  const themeColor=document.getElementById('themeColor');if(themeColor)themeColor.content=colors[settings.theme]||colors.classic;
+}
+function showSettingsPanel(panel,moveFocus=true){
+  document.querySelectorAll('[data-settings-panel]').forEach((item)=>item.classList.toggle('active',item.dataset.settingsPanel===panel));
+  elements.settingsModal.dataset.panel=panel;if(moveFocus)setTimeout(()=>elements.settingsModal.querySelector(panel==='main'?'[data-settings-open]':'[data-settings-back]')?.focus(),0);
+}
+function openSettings(){
+  elements.settingsEmail.textContent=currentUser?.email||'Signed in account';elements.settingsCloud.textContent=elements.storageStatus.textContent;
+  document.querySelectorAll('input[name="fairway-theme"]').forEach((input)=>{input.checked=input.value===settings.theme});
+  document.querySelectorAll('input[name="fairway-density"]').forEach((input)=>{input.checked=input.value===settings.density});
+  showSettingsPanel('main',false);elements.settingsModal.showModal();setTimeout(()=>elements.settingsModal.querySelector('[data-settings-open]')?.focus(),0);
+}
+function saveSettingsFromControls(){
+  const theme=document.querySelector('input[name="fairway-theme"]:checked')?.value||settings.theme;
+  const density=document.querySelector('input[name="fairway-density"]:checked')?.value||settings.density;
+  settings={theme,density};localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));applySettings();
 }
 
 function redirectToLogin() { location.replace(`${location.origin}/account/?returnTo=/golf/`); }

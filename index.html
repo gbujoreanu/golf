@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#10251d">
+  <meta name="theme-color" id="themeColor" content="#10251d">
   <meta name="description" content="Fairway - a private, account-based golf score and handicap tracker.">
   <title>Fairway</title>
-  <link rel="stylesheet" href="style.css?v=5">
+  <script>try{const s=JSON.parse(localStorage.getItem('fairway-settings-v1')||'{}');const themes=['classic','clubhouse','links','twilight','caddie-black'];document.documentElement.dataset.theme=themes.includes(s.theme)?s.theme:'classic';document.documentElement.dataset.density=s.density==='compact'?'compact':'comfortable'}catch(e){document.documentElement.dataset.theme='classic';document.documentElement.dataset.density='comfortable'}</script>
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body class="auth-pending">
   <header class="app-header">
@@ -17,8 +18,7 @@
       </a>
       <div class="header-actions">
         <span class="privacy-badge" id="storageStatus">Connecting securely…</span>
-        <button class="button ghost compact hidden" id="migrateButton" type="button">Move device data</button>
-        <button class="button ghost compact" id="signOutButton" type="button">Sign out</button>
+        <button class="button ghost compact settings-trigger" id="settingsTrigger" type="button" aria-label="Open Fairway settings"><span aria-hidden="true">⚙</span><span>Settings</span></button>
       </div>
     </div>
   </header>
@@ -130,13 +130,58 @@
     </main>
   </div>
 
-  <footer class="app-footer">
-    <p>Fairway saves rounds and courses to your private account.</p>
-    <button id="resetButton" class="text-button danger" type="button">Reset account data</button>
-  </footer>
+  <dialog class="settings-modal" id="settingsModal" aria-labelledby="settingsTitle">
+    <div class="settings-sheet">
+      <header class="settings-heading"><div><p class="eyebrow">Your Fairway</p><h2 id="settingsTitle">Settings</h2></div><button class="modal-close" id="closeSettings" type="button" aria-label="Close settings">×</button></header>
+      <div class="settings-panel active" data-settings-panel="main">
+        <p class="settings-intro">Choose an area. Rounds and courses stay securely tied to your account.</p>
+        <nav class="settings-categories" aria-label="Settings categories">
+          <button class="settings-category" type="button" data-settings-open="account"><span class="settings-category-icon">@</span><span><strong>Account</strong><small>Identity, cloud connection, and sign out</small></span><b aria-hidden="true">→</b></button>
+          <button class="settings-category" type="button" data-settings-open="appearance"><span class="settings-category-icon">◐</span><span><strong>Appearance</strong><small>Independent theme and layout density</small></span><b aria-hidden="true">→</b></button>
+          <button class="settings-category" type="button" data-settings-open="scoring"><span class="settings-category-icon">±</span><span><strong>Rounds &amp; Scoring</strong><small>How Fairway calculates your game</small></span><b aria-hidden="true">→</b></button>
+          <button class="settings-category" type="button" data-settings-open="privacy"><span class="settings-category-icon">◉</span><span><strong>Privacy</strong><small>Your current private-by-default setup</small></span><b aria-hidden="true">→</b></button>
+          <button class="settings-category" type="button" data-settings-open="data"><span class="settings-category-icon">◇</span><span><strong>Data</strong><small>Device migration and account reset</small></span><b aria-hidden="true">→</b></button>
+        </nav>
+      </div>
+      <section class="settings-panel settings-section" data-settings-panel="account" aria-labelledby="accountSettingsTitle">
+        <button class="settings-back" type="button" data-settings-back>← Settings</button>
+        <div class="settings-section-heading"><div><p class="eyebrow">Account</p><h3 id="accountSettingsTitle">Verified and connected</h3></div><span class="verified-chip">● Email verified</span></div>
+        <dl class="account-details"><div><dt>Signed in as</dt><dd id="settingsEmail">—</dd></div><div><dt>Cloud status</dt><dd id="settingsCloud">Connecting…</dd></div></dl>
+        <div class="settings-actions"><a class="button secondary" href="../account/?returnTo=/golf/">Open account page</a><a class="button secondary" href="../account/?returnTo=/golf/">Change or reset password</a><button class="button secondary" id="signOutButton" type="button">Sign out</button></div>
+      </section>
+      <section class="settings-panel settings-section" data-settings-panel="appearance" aria-labelledby="appearanceSettingsTitle">
+        <button class="settings-back" type="button" data-settings-back>← Settings</button>
+        <div class="settings-section-heading"><div><p class="eyebrow">Appearance</p><h3 id="appearanceSettingsTitle">Choose your course conditions</h3></div></div>
+        <fieldset class="theme-picker"><legend>Theme</legend>
+          <label><input type="radio" name="fairway-theme" value="classic"><span class="theme-swatch classic"><i></i><b>Classic</b><small>Fairway green</small></span></label>
+          <label><input type="radio" name="fairway-theme" value="clubhouse"><span class="theme-swatch clubhouse"><i></i><b>Clubhouse</b><small>Traditional premium</small></span></label>
+          <label><input type="radio" name="fairway-theme" value="links"><span class="theme-swatch links"><i></i><b>Links</b><small>Airy and coastal</small></span></label>
+          <label><input type="radio" name="fairway-theme" value="twilight"><span class="theme-swatch twilight"><i></i><b>Twilight</b><small>Evening golf</small></span></label>
+          <label><input type="radio" name="fairway-theme" value="caddie-black"><span class="theme-swatch caddie-black"><i></i><b>Caddie Black</b><small>Performance dark</small></span></label>
+        </fieldset>
+        <fieldset class="density-picker"><legend>Layout density</legend><label><input type="radio" name="fairway-density" value="comfortable"> Comfortable</label><label><input type="radio" name="fairway-density" value="compact"> Compact</label></fieldset>
+      </section>
+      <section class="settings-panel settings-section" data-settings-panel="scoring" aria-labelledby="scoringSettingsTitle">
+        <button class="settings-back" type="button" data-settings-back>← Settings</button><div class="settings-section-heading"><div><p class="eyebrow">Rounds &amp; Scoring</p><h3 id="scoringSettingsTitle">Transparent calculations</h3></div></div>
+        <div class="settings-note"><strong>Current scoring model</strong><p>Fairway totals all 18 holes, calculates score to par and score differential from course rating, slope, and PCC, then estimates a Handicap Index from eligible rounds.</p></div>
+      </section>
+      <section class="settings-panel settings-section" data-settings-panel="privacy" aria-labelledby="privacySettingsTitle">
+        <button class="settings-back" type="button" data-settings-back>← Settings</button><div class="settings-section-heading"><div><p class="eyebrow">Privacy</p><h3 id="privacySettingsTitle">Private by default</h3></div></div>
+        <div class="settings-note"><strong>Only you can see this account</strong><p>Your current rounds, courses, scores, and statistics are protected by per-user database rules. Social visibility controls will appear here only when those features exist.</p></div>
+      </section>
+      <section class="settings-panel settings-section" data-settings-panel="data" aria-labelledby="dataSettingsTitle">
+        <button class="settings-back" type="button" data-settings-back>← Settings</button><div class="settings-section-heading"><div><p class="eyebrow">Data</p><h3 id="dataSettingsTitle">Your golf record</h3></div></div>
+        <p class="settings-copy">Rounds and courses are stored in your private Supabase account. Interface preferences remain on this device.</p>
+        <button class="button secondary hidden" id="migrateButton" type="button">Move older device data to cloud</button>
+        <div class="danger-zone"><div><strong>Reset Fairway data</strong><p>Permanently removes every saved round and course, then restores the starter course list.</p></div><button id="resetButton" class="button danger" type="button">Reset account data</button></div>
+      </section>
+    </div>
+  </dialog>
+
+  <footer class="app-footer"><p>Fairway saves rounds and courses to your private account.</p></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js?v=1"></script>
-  <script type="module" src="app.js?v=5"></script>
+  <script type="module" src="app.js?v=6"></script>
 </body>
 </html>
