@@ -158,7 +158,7 @@ function bindEvents() {
   document.getElementById('closeSettings').addEventListener('click', () => elements.settingsModal.close());
   document.querySelectorAll('[data-settings-open]').forEach((button) => button.addEventListener('click', () => showSettingsPanel(button.dataset.settingsOpen)));
   document.querySelectorAll('[data-settings-back]').forEach((button) => button.addEventListener('click', () => showSettingsPanel('main')));
-  elements.settingsModal.addEventListener('close', () => showSettingsPanel('main', false));
+  elements.settingsModal.addEventListener('close', () => { elements.settingsTrigger.setAttribute('aria-expanded', 'false'); showSettingsPanel('main', false); });
   elements.settingsModal.addEventListener('change', saveSettingsFromControls);
   elements.holeGrid.addEventListener('click', handleScoreStep);
   elements.holeGrid.addEventListener('keydown', handleScoreKeys);
@@ -189,7 +189,7 @@ function openSettings(){
   elements.settingsEmail.textContent=currentUser?.email||'Signed in account';elements.settingsCloud.textContent=elements.storageStatus.textContent;
   document.querySelectorAll('input[name="fairway-theme"]').forEach((input)=>{input.checked=input.value===settings.theme});
   document.querySelectorAll('input[name="fairway-density"]').forEach((input)=>{input.checked=input.value===settings.density});
-  showSettingsPanel('main',false);elements.settingsModal.showModal();setTimeout(()=>elements.settingsModal.querySelector('[data-settings-open]')?.focus(),0);
+  showSettingsPanel('main',false);elements.settingsModal.showModal();elements.settingsTrigger.setAttribute('aria-expanded','true');setTimeout(()=>elements.settingsModal.querySelector('[data-settings-open]')?.focus(),0);
 }
 function saveSettingsFromControls(){
   const theme=document.querySelector('input[name="fairway-theme"]:checked')?.value||settings.theme;
