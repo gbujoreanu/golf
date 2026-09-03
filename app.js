@@ -1,7 +1,6 @@
 import {
   calculateAverages,
   calculateHandicapIndex,
-  courseHandicap,
   formatToPar,
   scoreDifferential,
   sumHoles
@@ -9,25 +8,24 @@ import {
 
 const STORAGE_KEY = "fairway-log-v2";
 const SETTINGS_KEY = "fairway-settings-v1";
+const ONBOARDING_KEY = "fairway-onboarding-v1";
 const FAIRWAY_THEMES = ['classic','clubhouse','links','twilight','caddie-black'];
 const DEFAULT_SETTINGS = { theme:'classic', density:'comfortable' };
 const cloudClient = window.AppAuth?.client || null;
-const defaultCourses = [
-  { id: "charwood-green", course: "Charwood", tee: "Green", par: 72, rating: 67.8, slope: 126 },
-  { id: "charwood-red", course: "Charwood", tee: "Red", par: 72, rating: 69.7, slope: 129 },
-  { id: "spur-blue", course: "Spur at Northwoods", tee: "Blue", par: 72, rating: 71.9, slope: 122 }
-];
 
 const legacyState = loadLegacyState();
 let state = { courses: [], rounds: [] };
 let currentUser = null;
 let activeView = "dashboard";
 let settings = loadSettings();
+let returnToRoundAfterCourse = false;
 
 const elements = {
   navButtons: [...document.querySelectorAll("[data-view]")],
   views: [...document.querySelectorAll("[data-view-panel]")],
   dashboardPlayer: document.getElementById("dashboardPlayer"),
+  dashboardEmpty: document.getElementById("dashboardEmpty"),
+  dashboardData: document.getElementById("dashboardData"),
   handicapStat: document.getElementById("handicapStat"),
   handicapDetail: document.getElementById("handicapDetail"),
   averageStat: document.getElementById("averageStat"),
@@ -50,6 +48,11 @@ const elements = {
   roundToPar: document.getElementById("roundToPar"),
   roundDifferential: document.getElementById("roundDifferential"),
   roundMessage: document.getElementById("roundMessage"),
+  holeProgress: document.getElementById("holeProgress"),
+  scoreProgress: document.getElementById("scoreProgress"),
+  saveRoundButton: document.getElementById("saveRoundButton"),
+  roundCourseGate: document.getElementById("roundCourseGate"),
+  selectedCourseContext: document.getElementById("selectedCourseContext"),
   clearScores: document.getElementById("clearScores"),
   roundsPlayerFilter: document.getElementById("roundsPlayerFilter"),
   roundsCourseFilter: document.getElementById("roundsCourseFilter"),
@@ -71,6 +74,7 @@ const elements = {
   settingsModal: document.getElementById("settingsModal"),
   settingsEmail: document.getElementById("settingsEmail"),
   settingsCloud: document.getElementById("settingsCloud")
+  ,welcomeModal: document.getElementById("welcomeModal")
 };
 
 initialize();
@@ -90,16 +94,11 @@ async function initialize() {
   currentUser = data.session.user;
   try {
     state = await loadCloudState();
-    if (!state.courses.length) {
-      const rows = defaultCourses.map(toCloudCourse);
-      const { error: seedError } = await cloudClient.from('golf_courses').upsert(rows, { onConflict:'user_id,id' });
-      if (seedError) throw seedError;
-      state.courses = defaultCourses.map((course) => ({ ...course }));
-    }
     elements.storageStatus.textContent = `Cloud verified · ${currentUser.email || 'signed in'}`;
     elements.migrateButton.classList.toggle('hidden', !legacyState);
     document.body.classList.remove('auth-pending');
     renderAll();
+    if (!hasSeenWelcome()) setTimeout(openWelcome, 250);
   } catch (loadError) {
     console.error(loadError); elements.storageStatus.textContent = 'Cloud load failed'; elements.storageStatus.classList.add('sync-error');
   }
@@ -117,7 +116,12 @@ function loadLegacyState() {
 
 function bindEvents() {
   elements.navButtons.forEach((button) => button.addEventListener("click", () => showView(button.dataset.view)));
-  document.querySelectorAll("[data-go-to]").forEach((button) => button.addEventListener("click", () => showView(button.dataset.goTo)));
+  document.addEventListener("click", (event) => {
+    const destination = event.target.closest("[data-go-to]");
+    if (destination) showView(destination.dataset.goTo);
+    const addCourse = event.target.closest("[data-add-course]");
+    if (addCourse) { returnToRoundAfterCourse = true; showView("courses"); setTimeout(() => elements.courseName.focus(), 0); }
+  });
   document.querySelectorAll("[data-view-link]").forEach((link) => link.addEventListener("click", (event) => {
     event.preventDefault();
     showView(link.dataset.viewLink);
@@ -143,6 +147,7 @@ function bindEvents() {
     updateRoundSummary();
   });
   elements.roundForm.addEventListener("submit", saveRound);
+  elements.roundForm.addEventListener("input", updateRoundSummary);
   elements.courseForm.addEventListener("submit", saveCourse);
   elements.courseLibrary.addEventListener("click", handleCourseAction);
   elements.roundHistory.addEventListener("click", handleRoundAction);
@@ -155,7 +160,17 @@ function bindEvents() {
   document.querySelectorAll('[data-settings-back]').forEach((button) => button.addEventListener('click', () => showSettingsPanel('main')));
   elements.settingsModal.addEventListener('close', () => showSettingsPanel('main', false));
   elements.settingsModal.addEventListener('change', saveSettingsFromControls);
+  elements.holeGrid.addEventListener('click', handleScoreStep);
+  elements.holeGrid.addEventListener('keydown', handleScoreKeys);
+  document.getElementById('skipWelcome').addEventListener('click', dismissWelcome);
+  document.getElementById('startWelcome').addEventListener('click', startWelcome);
+  document.getElementById('replayWelcome').addEventListener('click', () => { elements.settingsModal.close(); openWelcome(); });
 }
+
+function hasSeenWelcome(){try{return localStorage.getItem(ONBOARDING_KEY)==='seen'}catch(error){return false}}
+function openWelcome(){if(!elements.welcomeModal.open)elements.welcomeModal.showModal()}
+function dismissWelcome(){try{localStorage.setItem(ONBOARDING_KEY,'seen')}catch(error){}elements.welcomeModal.close()}
+function startWelcome(){dismissWelcome();showView(state.courses.length?'new-round':'courses');if(!state.courses.length)setTimeout(()=>elements.courseName.focus(),0)}
 
 function loadSettings(){
   try{const saved=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');return{theme:FAIRWAY_THEMES.includes(saved.theme)?saved.theme:'classic',density:saved.density==='compact'?'compact':'comfortable'}}
@@ -216,7 +231,7 @@ function showView(viewName) {
   activeView = viewName;
   elements.views.forEach((view) => view.classList.toggle("active", view.dataset.viewPanel === viewName));
   elements.navButtons.forEach((button) => button.classList.toggle("active", button.dataset.view === viewName));
-  if (viewName === "new-round") elements.playerName.focus({ preventScroll: true });
+  if (viewName === "new-round") (state.courses.length ? elements.roundCourse : document.querySelector('[data-add-course]'))?.focus({ preventScroll: true });
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -226,6 +241,7 @@ function renderAll() {
   renderDashboard();
   renderRoundHistory();
   renderCourseLibrary();
+  renderRoundReadiness();
 }
 
 function getPlayers() {
@@ -246,7 +262,7 @@ function renderCourseOptions() {
   const courseNames = [...new Set(state.courses.map((course) => course.course))].sort((a, b) => a.localeCompare(b));
   const selectedCourse = elements.roundCourse.value;
   elements.roundCourse.innerHTML = courseNames.length
-    ? courseNames.map((course) => `<option value="${escapeHtml(course)}">${escapeHtml(course)}</option>`).join("")
+    ? `<option value="">Choose a course</option>${courseNames.map((course) => `<option value="${escapeHtml(course)}">${escapeHtml(course)}</option>`).join("")}`
     : `<option value="">Add a course first</option>`;
   if (courseNames.includes(selectedCourse)) elements.roundCourse.value = selectedCourse;
   renderTeeOptions();
@@ -259,7 +275,13 @@ function renderCourseOptions() {
 function renderTeeOptions() {
   const course = elements.roundCourse.value;
   const tees = state.courses.filter((item) => item.course === course);
-  elements.roundTee.innerHTML = tees.map((item) => `<option value="${item.id}">${escapeHtml(item.tee)} · ${item.rating}/${item.slope}</option>`).join("");
+  elements.roundTee.innerHTML = tees.length ? `<option value="">Choose a tee</option>${tees.map((item) => `<option value="${item.id}">${escapeHtml(item.tee)} tees</option>`).join("")}` : `<option value="">Choose a course first</option>`;
+  renderSelectedCourseContext();
+}
+
+function renderSelectedCourseContext(){
+  const tee=selectedTee();
+  elements.selectedCourseContext.innerHTML=tee?`<span><small>Par</small><strong>${tee.par}</strong></span><span><small>Rating</small><strong>${tee.rating}</strong></span><span><small>Slope</small><strong>${tee.slope}</strong></span>`:`<p>Choose a course and tee to load its scoring details.</p>`;
 }
 
 function selectedTee() {
@@ -267,14 +289,12 @@ function selectedTee() {
 }
 
 function createHoleInputs() {
-  elements.holeGrid.innerHTML = Array.from({ length: 18 }, (_, index) => `
-    <label class="hole-field">
-      <span>Hole ${index + 1}</span>
-      <input class="hole-score" data-hole="${index + 1}" type="number" min="1" max="20" inputmode="numeric" aria-label="Hole ${index + 1} score" required>
-    </label>
-  `).join("");
-  elements.holeGrid.addEventListener("input", updateRoundSummary);
+  const nine=(start,label)=>`<section class="nine-card"><header><div><span>${label}</span><small>Holes ${start}–${start+8}</small></div><strong id="${start===1?'frontNineLive':'backNineLive'}">—</strong></header><div class="nine-grid">${Array.from({length:9},(_,offset)=>{const hole=start+offset;return `<div class="hole-field"><span>Hole ${hole}</span><div class="score-stepper"><button type="button" data-score-step="-1" data-hole-target="${hole}" aria-label="Decrease hole ${hole} score">−</button><input class="hole-score" data-hole="${hole}" type="number" min="1" max="20" inputmode="numeric" aria-label="Hole ${hole} score" required><button type="button" data-score-step="1" data-hole-target="${hole}" aria-label="Increase hole ${hole} score">+</button></div></div>`}).join('')}</div></section>`;
+  elements.holeGrid.innerHTML=nine(1,'Front nine')+nine(10,'Back nine');
 }
+
+function handleScoreStep(event){const button=event.target.closest('[data-score-step]');if(!button)return;const input=elements.holeGrid.querySelector(`[data-hole="${button.dataset.holeTarget}"]`);const current=Number(input.value)||4;input.value=String(Math.min(20,Math.max(1,current+Number(button.dataset.scoreStep))));input.focus();updateRoundSummary()}
+function handleScoreKeys(event){if(!event.target.matches('.hole-score'))return;const inputs=[...elements.holeGrid.querySelectorAll('.hole-score')];const index=inputs.indexOf(event.target);if(event.key==='Enter'||event.key==='ArrowRight'){event.preventDefault();inputs[Math.min(inputs.length-1,index+1)]?.focus()}if(event.key==='ArrowLeft'){event.preventDefault();inputs[Math.max(0,index-1)]?.focus()}}
 
 function getHoleScores() {
   return [...document.querySelectorAll(".hole-score")].map((input) => Number(input.value) || 0);
@@ -286,11 +306,16 @@ function updateRoundSummary() {
   const back = sumHoles(holes.slice(9));
   const total = front + back;
   const tee = selectedTee();
-  elements.frontTotal.textContent = front;
-  elements.backTotal.textContent = back;
-  elements.roundTotal.textContent = total;
+  const completed=holes.filter((score)=>Number.isInteger(score)&&score>0).length;
+  elements.frontTotal.textContent = completed ? front : '—';
+  elements.backTotal.textContent = completed > 9 ? back : '—';
+  elements.roundTotal.textContent = completed ? total : '—';
   elements.roundToPar.textContent = total && tee ? formatToPar(total - tee.par) : "—";
   elements.roundDifferential.textContent = total && tee ? scoreDifferential(total, tee.rating, tee.slope, elements.roundPcc.value) : "—";
+  elements.holeProgress.textContent=`${completed} / 18`;elements.scoreProgress.value=completed;
+  elements.saveRoundButton.disabled=!(completed===18&&tee&&elements.playerName.value.trim()&&elements.roundDate.value);
+  const frontLive=document.getElementById('frontNineLive'),backLive=document.getElementById('backNineLive');if(frontLive)frontLive.textContent=completed?front:'—';if(backLive)backLive.textContent=completed>9?back:'—';
+  document.querySelectorAll('.round-steps li').forEach((step,index)=>step.classList.toggle('active',index===0&&!tee||index===1&&tee&&!elements.playerName.value.trim()||index===2&&tee&&elements.playerName.value.trim()&&completed<18||index===3&&completed===18));
 }
 
 async function saveRound(event) {
@@ -331,7 +356,7 @@ async function saveRound(event) {
   document.querySelectorAll(".hole-score").forEach((input) => { input.value = ""; });
   renderAll();
   updateRoundSummary();
-  showMessage(elements.roundMessage, `Saved ${player}'s ${total} at ${tee.course}.`);
+  showView('dashboard');
 }
 
 async function saveCourse(event) {
@@ -357,6 +382,7 @@ async function saveCourse(event) {
   elements.coursePar.value = 72;
   renderAll();
   showMessage(elements.courseMessage, `${course} · ${tee} saved.`);
+  if(returnToRoundAfterCourse){returnToRoundAfterCourse=false;showView('new-round');elements.roundCourse.value=course;renderTeeOptions();elements.roundTee.value=savedCourse.id;renderSelectedCourseContext();updateRoundSummary()}
 }
 
 function renderDashboard() {
@@ -364,6 +390,14 @@ function renderDashboard() {
   const rounds = player === "all" ? state.rounds : state.rounds.filter((round) => round.player === player);
   const averages = calculateAverages(rounds);
   const handicap = calculateHandicapIndex(rounds);
+  const hasRounds=rounds.length>0;
+  elements.dashboardEmpty.hidden=hasRounds;
+  elements.dashboardData.hidden=!hasRounds;
+  if(!hasRounds){
+    const hasCourses=state.courses.length>0;
+    elements.dashboardEmpty.innerHTML=`<div class="hero-route"><span>${hasCourses?'Ready for the first tee':'Start your course book'}</span><strong>01</strong></div><div><p class="eyebrow">${hasCourses?'Your first round':'Clean slate'}</p><h1>${hasCourses?'Your scorecard is ready.':'Your next round starts here.'}</h1><p>${hasCourses?'Choose a saved course, enter 18 scores, and Fairway will begin building your history.':'Add the course and tee you actually play. Fairway never fills your account with sample golf data.'}</p><button class="button primary" type="button" data-go-to="${hasCourses?'new-round':'courses'}">${hasCourses?'Record your first round':'Add your first course'}</button></div><svg viewBox="0 0 420 260" aria-hidden="true"><path d="M10 235c92-110 161-95 222-153 55-52 99-28 178-72v225H10Z"/><path d="M151 195V50m0 10h96l-27 28 27 28h-96"/><circle cx="151" cy="200" r="11"/></svg>`;
+    return;
+  }
   elements.handicapStat.textContent = handicap.index ?? "—";
   elements.handicapDetail.textContent = handicap.eligible
     ? `Best ${handicap.usedCount} of latest ${handicap.totalCount}`
@@ -398,7 +432,7 @@ function renderRecentRounds(rounds) {
   const recent = [...rounds].sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 4);
   if (!recent.length) {
     elements.recentRounds.className = "round-list empty-state";
-    elements.recentRounds.innerHTML = emptyMarkup("No rounds yet", "Add your first scorecard to start building a trend.");
+    elements.recentRounds.innerHTML = emptyMarkup("No rounds yet", "Record your first scorecard to begin your history.", "Record a round", "new-round");
     return;
   }
   elements.recentRounds.className = "round-list";
@@ -414,14 +448,15 @@ function renderRoundHistory() {
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
   if (!rounds.length) {
     elements.roundHistory.className = "history-list empty-state";
-    elements.roundHistory.innerHTML = emptyMarkup("No matching rounds", "Add a round or change the filters.");
+    const anyRounds=state.rounds.length>0;
+    elements.roundHistory.innerHTML = emptyMarkup(anyRounds?"No matching rounds":"No rounds recorded yet",anyRounds?"Try changing the filters.":"Your completed scorecards will appear here.",anyRounds?null:"Record your first round",anyRounds?null:"new-round");
     return;
   }
   elements.roundHistory.className = "history-list";
   elements.roundHistory.innerHTML = rounds.map((round) => `
     <article class="history-card">
       <div class="history-score"><strong>${round.total}</strong><span>${formatToPar(round.total - round.par)}</span></div>
-      <div class="history-main"><h3>${escapeHtml(round.course)}</h3><p>${escapeHtml(round.player)} · ${escapeHtml(round.tee)} tees · ${formatDate(round.date)}</p></div>
+      <div class="history-main"><h3>${escapeHtml(round.course)}</h3><p>${formatDate(round.date)} <span>·</span> ${escapeHtml(round.tee)} tees <span>·</span> ${escapeHtml(round.player)}</p></div>
       <div class="history-metrics"><span><small>Differential</small><strong>${round.differential ?? scoreDifferential(round.total, round.courseRating, round.slope, round.pcc)}</strong></span><span><small>Rating / slope</small><strong>${round.courseRating} / ${round.slope}</strong></span></div>
       <button class="icon-button danger" type="button" data-delete-round="${round.id}" aria-label="Delete ${escapeHtml(round.course)} round">Delete</button>
     </article>
@@ -437,11 +472,11 @@ function renderCourseLibrary() {
     ? Object.groupBy(state.courses, (item) => item.course)
     : state.courses.reduce((result, item) => ({ ...result, [item.course]: [...(result[item.course] || []), item] }), {});
   if (!state.courses.length) {
-    elements.courseLibrary.innerHTML = emptyMarkup("No courses saved", "Add a course and tee to start tracking rounds.");
+    elements.courseLibrary.innerHTML = emptyMarkup("No courses yet", "Add a course once and reuse its tee information whenever you play.");
     return;
   }
   elements.courseLibrary.innerHTML = Object.entries(groups).sort(([a], [b]) => a.localeCompare(b)).map(([course, tees]) => `
-    <section class="course-group"><h3>${escapeHtml(course)}</h3>${tees.map((tee) => `
+    <section class="course-group"><header><div><span>Course</span><h3>${escapeHtml(course)}</h3></div><small>${tees.length} saved tee${tees.length===1?'':'s'}</small></header>${tees.map((tee) => `
       <div class="tee-row"><div><strong>${escapeHtml(tee.tee)}</strong><span>Par ${tee.par}</span></div><div class="tee-ratings"><span><small>Rating</small>${tee.rating}</span><span><small>Slope</small>${tee.slope}</span></div><button class="icon-button danger" type="button" data-delete-course="${tee.id}" aria-label="Delete ${escapeHtml(course)} ${escapeHtml(tee.tee)} tee">Delete</button></div>
     `).join("")}</section>
   `).join("");
@@ -474,8 +509,7 @@ async function resetData() {
   if (!confirm("Permanently reset every round and course in your cloud account? This cannot be undone.")) return;
   try{
     for(const table of ['golf_rounds','golf_courses']){const{error}=await cloudClient.from(table).delete().eq('user_id',currentUser.id);if(error)throw error}
-    const courses=defaultCourses.map(toCloudCourse);const{error}=await cloudClient.from('golf_courses').insert(courses);if(error)throw error;
-    state={courses:defaultCourses.map((course)=>({...course})),rounds:[]};renderAll();showView('dashboard');
+    state={courses:[],rounds:[]};renderAll();showView('dashboard');
   }catch(error){console.error(error);alert('Your account data could not be reset.');}
 }
 
@@ -484,8 +518,16 @@ function showMessage(element, message, isError = false) {
   element.classList.toggle("error", isError);
 }
 
-function emptyMarkup(title, copy) {
-  return `<div class="empty-content"><span aria-hidden="true">⛳</span><strong>${title}</strong><p>${copy}</p></div>`;
+function renderRoundReadiness(){
+  const hasCourses=state.courses.length>0;
+  elements.roundCourseGate.hidden=hasCourses;
+  elements.roundForm.hidden=!hasCourses;
+  if(!hasCourses)elements.roundCourseGate.innerHTML=`<svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-course"/></svg><p class="eyebrow">Course required</p><h2>Add a course before recording a round.</h2><p>Fairway uses its par, Course Rating, and Slope Rating to calculate your score and differential correctly.</p><button class="button primary" type="button" data-add-course>Add your first course</button>`;
+  updateRoundSummary();
+}
+
+function emptyMarkup(title, copy, actionLabel=null, destination=null) {
+  return `<div class="empty-content"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-course"/></svg><strong>${title}</strong><p>${copy}</p>${actionLabel?`<button class="button primary" type="button" data-go-to="${destination}">${actionLabel}</button>`:''}</div>`;
 }
 
 function slugify(value) {

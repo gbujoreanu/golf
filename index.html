@@ -1,190 +1,74 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" id="themeColor" content="#10251d">
-  <meta name="description" content="Fairway - a private, account-based golf score and handicap tracker.">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" id="themeColor" content="#10251d"><meta name="description" content="Fairway — private golf rounds, scorecards, and progress.">
   <title>Fairway</title>
-  <script>try{const s=JSON.parse(localStorage.getItem('fairway-settings-v1')||'{}');const themes=['classic','clubhouse','links','twilight','caddie-black'];document.documentElement.dataset.theme=themes.includes(s.theme)?s.theme:'classic';document.documentElement.dataset.density=s.density==='compact'?'compact':'comfortable'}catch(e){document.documentElement.dataset.theme='classic';document.documentElement.dataset.density='comfortable'}</script>
-  <link rel="stylesheet" href="style.css?v=6">
-  <link rel="stylesheet" href="/shared/app-switcher.css?v=3">
+  <script>try{const s=JSON.parse(localStorage.getItem('fairway-settings-v1')||'{}');const t=['classic','clubhouse','links','twilight','caddie-black'];document.documentElement.dataset.theme=t.includes(s.theme)?s.theme:'classic';document.documentElement.dataset.density=s.density==='compact'?'compact':'comfortable'}catch(e){document.documentElement.dataset.theme='classic';document.documentElement.dataset.density='comfortable'}</script>
+  <link rel="stylesheet" href="style.css?v=7"><link rel="stylesheet" href="/shared/app-switcher.css?v=3">
 </head>
 <body class="auth-pending">
-  <header class="app-header">
-    <div class="app-header-inner">
-      <a class="brand" href="#dashboard" data-view-link="dashboard" aria-label="Fairway dashboard">
-        <span class="brand-mark" aria-hidden="true">F</span>
-        <span><strong>Fairway</strong><small>Golf scores and handicap trends.</small></span>
-      </a>
-      <div class="header-actions">
-        <div data-app-switcher="fairway"></div>
-        <span class="privacy-badge" id="storageStatus">Connecting securely…</span>
-        <button class="button ghost compact settings-trigger" id="settingsTrigger" type="button" aria-label="Open Fairway settings"><span aria-hidden="true">⚙</span><span>Settings</span></button>
-      </div>
-    </div>
-  </header>
-
+  <svg class="svg-library" aria-hidden="true">
+    <symbol id="icon-overview" viewBox="0 0 24 24"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/></symbol>
+    <symbol id="icon-round" viewBox="0 0 24 24"><path d="M5 21V4m0 1h10l-2.5 3L15 11H5m10 5v6m-3-3h6"/></symbol>
+    <symbol id="icon-history" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2-5.3L3 9m0-5v5h5m4-2v5l3 2"/></symbol>
+    <symbol id="icon-course" viewBox="0 0 24 24"><path d="M4 20c3-4 6-5 9-4s5 0 7-3M7 17V4m0 1h8l-2 3 2 3H7M3 20h18"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></symbol>
+    <symbol id="icon-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4 3.5-6 8-6s7.2 2 8 6"/></symbol>
+    <symbol id="icon-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18h1.5a1.8 1.8 0 0 0 0-3.6H12a1.7 1.7 0 0 1 0-3.4h3a6 6 0 0 0 0-12h-3Z"/><circle cx="7.5" cy="10" r=".8"/><circle cx="9.5" cy="6.5" r=".8"/><circle cx="14" cy="6" r=".8"/></symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.7 2.8 8.2 7 10 4.2-1.8 7-5.3 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></symbol>
+    <symbol id="icon-data" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+  </svg>
+  <header class="app-header"><div class="app-header-inner">
+    <a class="brand" href="#dashboard" data-view-link="dashboard" aria-label="Fairway overview"><svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true"><path class="brand-green" d="M8 39c8-11 13-16 19-17 5-1 9 1 13-5v22H8Z"/><path d="M17 35V10m0 2h14l-4 5 4 5H17"/><circle cx="17" cy="36" r="2.5"/></svg><span><strong>Fairway</strong><small>Rounds · Courses · Progress</small></span></a>
+    <div class="header-actions"><div data-app-switcher="fairway"></div><span class="privacy-badge" id="storageStatus">Connecting securely…</span><button class="icon-label-button settings-trigger" id="settingsTrigger" type="button" aria-label="Open Fairway settings"><svg aria-hidden="true"><use href="#icon-settings"/></svg><span>Settings</span></button></div>
+  </div></header>
   <div class="app-layout">
-    <nav class="side-nav" aria-label="Application navigation">
-      <button class="nav-button active" type="button" data-view="dashboard"><span>Overview</span><small>Stats and trends</small></button>
-      <button class="nav-button" type="button" data-view="new-round"><span>Add round</span><small>Enter 18 holes</small></button>
-      <button class="nav-button" type="button" data-view="rounds"><span>Round history</span><small>Scores and differentials</small></button>
-      <button class="nav-button" type="button" data-view="courses"><span>Courses</span><small>Rating, slope, and par</small></button>
+    <nav class="side-nav" aria-label="Fairway navigation">
+      <button class="nav-button active" type="button" data-view="dashboard"><svg aria-hidden="true"><use href="#icon-overview"/></svg><span><b>Overview</b><small>Your golf at a glance</small></span></button>
+      <button class="nav-button" type="button" data-view="new-round"><svg aria-hidden="true"><use href="#icon-round"/></svg><span><b>Add round</b><small>Record a scorecard</small></span></button>
+      <button class="nav-button" type="button" data-view="rounds"><svg aria-hidden="true"><use href="#icon-history"/></svg><span><b>History</b><small>Rounds and differentials</small></span></button>
+      <button class="nav-button" type="button" data-view="courses"><svg aria-hidden="true"><use href="#icon-course"/></svg><span><b>Courses</b><small>Your places to play</small></span></button>
     </nav>
-
     <main>
       <section class="view active" id="dashboard" data-view-panel="dashboard">
-        <div class="page-heading dashboard-heading">
-          <div>
-            <p class="eyebrow">Season overview</p>
-            <h1>Play the round.<br>Know the trend.</h1>
-            <p class="lede">Track scores, compare recent form, and estimate your Handicap Index using the rating and slope from the tees you played.</p>
-          </div>
-          <label class="field player-filter">Player
-            <select id="dashboardPlayer"></select>
-          </label>
+        <div id="dashboardEmpty" class="first-round-hero" hidden></div>
+        <div id="dashboardData"><div class="page-heading dashboard-heading"><div><p class="eyebrow">Your season</p><h1>Read your game.</h1><p class="lede">Scores, form, and difficulty-adjusted performance from the rounds you play.</p></div><label class="field player-filter">Player<select id="dashboardPlayer"></select></label></div>
+          <div class="scoreline" aria-live="polite"><div class="scoreline-primary"><span>Estimated handicap</span><strong id="handicapStat">—</strong><small id="handicapDetail">Add 3 rated rounds</small></div><div><span>Scoring average</span><strong id="averageStat">—</strong><small>All rounds</small></div><div><span>Last five</span><strong id="recentAverageStat">—</strong><small>Recent form</small></div><div><span>Personal best</span><strong id="bestStat">—</strong><small id="bestDetail">No rounds yet</small></div></div>
+          <section class="performance-section"><div class="section-heading"><div><p class="eyebrow">Performance</p><h2>Recent scoring</h2></div><span id="toParAverage" class="metric-chip">— avg to par</span></div><div id="trendChart" class="trend-chart" aria-label="Recent score trend"></div></section>
+          <section class="recent-section"><div class="section-heading"><div><p class="eyebrow">Scorecards</p><h2>Recent rounds</h2></div><button class="text-button" type="button" data-go-to="rounds">View history <svg aria-hidden="true"><use href="#icon-arrow"/></svg></button></div><div id="recentRounds" class="round-list"></div></section>
         </div>
-
-        <div class="stat-grid" aria-live="polite">
-          <article class="stat-card featured"><span>Handicap estimate</span><strong id="handicapStat">—</strong><small id="handicapDetail">Add 3 rated rounds</small></article>
-          <article class="stat-card"><span>Scoring average</span><strong id="averageStat">—</strong><small>All tracked rounds</small></article>
-          <article class="stat-card"><span>Last 5 average</span><strong id="recentAverageStat">—</strong><small>Recent form</small></article>
-          <article class="stat-card"><span>Personal best</span><strong id="bestStat">—</strong><small id="bestDetail">No rounds yet</small></article>
-        </div>
-
-        <div class="dashboard-grid">
-          <article class="panel trend-panel">
-            <div class="panel-heading"><div><p class="eyebrow">Trend</p><h2>Recent scoring</h2></div><span id="toParAverage" class="metric-chip">— avg to par</span></div>
-            <div id="trendChart" class="trend-chart" aria-label="Recent score trend"></div>
-          </article>
-          <article class="panel next-round-panel">
-            <p class="eyebrow">Ready to play?</p>
-            <h2>Log your next round.</h2>
-            <p>Choose a course and tee, enter each hole, and Fairway handles the totals and differential.</p>
-            <button class="button primary" type="button" data-go-to="new-round">Add a round</button>
-          </article>
-        </div>
-
-        <article class="panel recent-panel">
-          <div class="panel-heading"><div><p class="eyebrow">Latest</p><h2>Recent rounds</h2></div><button class="text-button" type="button" data-go-to="rounds">View all</button></div>
-          <div id="recentRounds" class="round-list empty-state"></div>
-        </article>
       </section>
-
       <section class="view" id="new-round" data-view-panel="new-round">
-        <div class="page-heading compact-heading"><div><p class="eyebrow">New round</p><h1>Enter your scorecard.</h1><p class="lede">All 18 holes are required. Totals and score differential update as you type.</p></div></div>
-        <form id="roundForm" class="panel form-panel">
-          <div class="form-grid round-meta-grid">
-            <label class="field">Player name<input id="playerName" name="playerName" autocomplete="name" required placeholder="George"></label>
-            <label class="field">Date<input id="roundDate" name="roundDate" type="date" required></label>
-            <label class="field">Course<select id="roundCourse" required></select></label>
-            <label class="field">Tee<select id="roundTee" required></select></label>
-            <label class="field"><span class="field-label">PCC adjustment <span class="help" title="Usually zero; official PCC ranges from -1 to +3.">?</span></span><input id="roundPcc" type="number" min="-1" max="3" step="1" value="0"></label>
-          </div>
-
-          <div class="round-summary" aria-live="polite">
-            <div><span>Front 9</span><strong id="frontTotal">0</strong></div>
-            <div><span>Back 9</span><strong id="backTotal">0</strong></div>
-            <div><span>Total</span><strong id="roundTotal">0</strong></div>
-            <div><span>To par</span><strong id="roundToPar">—</strong></div>
-            <div><span>Differential</span><strong id="roundDifferential">—</strong></div>
-          </div>
-
-          <div class="scorecard-header"><div><p class="eyebrow">Scorecard</p><h2>Hole-by-hole score</h2></div><button id="clearScores" class="text-button" type="button">Clear scores</button></div>
-          <div id="holeGrid" class="hole-grid"></div>
-          <p id="roundMessage" class="form-message" role="status"></p>
-          <div class="form-actions"><button class="button primary" type="submit">Save round</button></div>
-        </form>
+        <div class="page-heading round-heading"><div><p class="eyebrow">New scorecard</p><h1>Record a round.</h1><p class="lede">Choose where you played, enter 18 scores, then review the card before saving.</p></div></div>
+        <ol class="round-steps" aria-label="Round entry steps"><li class="active"><span>1</span>Course</li><li><span>2</span>Details</li><li><span>3</span>Scorecard</li><li><span>4</span>Review</li></ol>
+        <div id="roundCourseGate" class="round-gate" hidden></div>
+        <form id="roundForm" class="round-workspace"><div class="round-entry">
+          <section class="round-section" aria-labelledby="courseStepTitle"><div class="round-section-heading"><span>01</span><div><h2 id="courseStepTitle">Where did you play?</h2><p>Select a saved course and tee.</p></div><button class="text-button" type="button" data-add-course>Add a course</button></div><div class="form-grid course-choice-grid"><label class="field">Course<select id="roundCourse" required></select></label><label class="field">Tee<select id="roundTee" required></select></label></div><div id="selectedCourseContext" class="selected-course-context" aria-live="polite"></div></section>
+          <section class="round-section" aria-labelledby="detailsStepTitle"><div class="round-section-heading"><span>02</span><div><h2 id="detailsStepTitle">Round details</h2><p>Who played and when.</p></div></div><div class="form-grid details-grid"><label class="field">Player<input id="playerName" name="playerName" autocomplete="name" required placeholder="Golfer"></label><label class="field">Date<input id="roundDate" name="roundDate" type="date" required></label><label class="field"><span class="field-label">PCC <span class="help" title="Playing Conditions Calculation is usually 0; official values range from -1 to +3.">?</span></span><input id="roundPcc" type="number" min="-1" max="3" step="1" value="0"></label></div></section>
+          <section class="round-section scorecard-section" aria-labelledby="scoreStepTitle"><div class="round-section-heading"><span>03</span><div><h2 id="scoreStepTitle">Your scorecard</h2><p>Use number keys, arrow keys, or touch controls.</p></div><button id="clearScores" class="text-button" type="button">Clear</button></div><div id="holeGrid" class="hole-grid"></div></section>
+        </div><aside class="round-review" aria-labelledby="reviewTitle"><div class="review-kicker"><span>04</span><p>Review</p></div><h2 id="reviewTitle">Round summary</h2><div class="completion"><div><span>Scorecard</span><strong id="holeProgress">0 / 18</strong></div><progress id="scoreProgress" max="18" value="0">0 of 18 holes</progress></div><dl class="round-summary"><div><dt>Front 9</dt><dd id="frontTotal">—</dd></div><div><dt>Back 9</dt><dd id="backTotal">—</dd></div><div class="total"><dt>Total</dt><dd id="roundTotal">—</dd></div><div><dt>To par</dt><dd id="roundToPar">—</dd></div><div><dt>Differential</dt><dd id="roundDifferential">—</dd></div></dl><p id="roundMessage" class="form-message" role="status"></p><button class="button primary save-round" id="saveRoundButton" type="submit" disabled>Save round</button><p class="review-note">All 18 holes are required. Course details are saved with this round.</p></aside></form>
       </section>
-
-      <section class="view" id="rounds" data-view-panel="rounds">
-        <div class="page-heading compact-heading"><div><p class="eyebrow">Round history</p><h1>Every round, one record.</h1><p class="lede">Filter by player or course and see how difficulty-adjusted performance compares.</p></div></div>
-        <div class="panel toolbar">
-          <label class="field">Player<select id="roundsPlayerFilter"></select></label>
-          <label class="field">Course<select id="roundsCourseFilter"></select></label>
-          <button class="button ghost" id="clearRoundFilters" type="button">Clear filters</button>
-        </div>
-        <div id="roundHistory" class="history-list empty-state"></div>
-      </section>
-
-      <section class="view" id="courses" data-view-panel="courses">
-        <div class="page-heading compact-heading"><div><p class="eyebrow">Course library</p><h1>Set up the tees you play.</h1><p class="lede">Course Rating and Slope Rating are required for meaningful differentials. Use the values printed on the scorecard.</p></div></div>
-        <div class="courses-layout">
-          <form id="courseForm" class="panel form-panel">
-            <div class="panel-heading"><div><p class="eyebrow">Add a tee</p><h2>Course details</h2></div></div>
-            <div class="form-grid">
-              <label class="field full">Course name<input id="courseName" required placeholder="Bobby Jones Golf Course"></label>
-              <label class="field">Tee name<input id="teeName" required placeholder="White"></label>
-              <label class="field">Par<input id="coursePar" type="number" min="54" max="90" value="72" required></label>
-              <label class="field">Course Rating<input id="courseRating" type="number" min="50" max="90" step="0.1" placeholder="70.8" required></label>
-              <label class="field">Slope Rating<input id="courseSlope" type="number" min="55" max="155" placeholder="126" required></label>
-            </div>
-            <p id="courseMessage" class="form-message" role="status"></p>
-            <button class="button primary" type="submit">Save course tee</button>
-          </form>
-          <div class="panel course-library-panel">
-            <div class="panel-heading"><div><p class="eyebrow">Saved</p><h2>Your course library</h2></div></div>
-            <div id="courseLibrary" class="course-list"></div>
-          </div>
-        </div>
-      </section>
+      <section class="view" id="rounds" data-view-panel="rounds"><div class="page-heading compact-heading"><div><p class="eyebrow">Round history</p><h1>Every scorecard.</h1><p class="lede">Scan scores first, then compare tees and difficulty-adjusted performance.</p></div></div><div class="history-toolbar"><label class="field">Player<select id="roundsPlayerFilter"></select></label><label class="field">Course<select id="roundsCourseFilter"></select></label><button class="button secondary" id="clearRoundFilters" type="button">Clear filters</button></div><div class="history-labels" aria-hidden="true"><span>Score</span><span>Round</span><span>Performance</span><span></span></div><div id="roundHistory" class="history-list"></div></section>
+      <section class="view" id="courses" data-view-panel="courses"><div class="page-heading compact-heading"><div><p class="eyebrow">Your courses</p><h1>Places you play.</h1><p class="lede">Save each tee once, then reuse its par, rating, and slope whenever you record a round.</p></div></div><div class="courses-layout">
+        <form id="courseForm" class="course-form"><div class="section-heading"><div><p class="eyebrow">Add course &amp; tee</p><h2>Start with the scorecard.</h2></div></div><label class="field full">Course name<input id="courseName" required placeholder="Course name" autocomplete="off"></label><label class="field full">Tee name<input id="teeName" required placeholder="For example: White" autocomplete="off"></label><div class="form-grid course-numbers"><label class="field">Par<input id="coursePar" type="number" min="54" max="90" value="72" required><small>Total par for 18 holes.</small></label><label class="field">Course Rating<input id="courseRating" type="number" min="50" max="90" step="0.1" placeholder="71.2" required><small>Expected score for a scratch golfer.</small></label><label class="field">Slope Rating<input id="courseSlope" type="number" min="55" max="155" placeholder="125" required><small>Relative difficulty; 113 is standard.</small></label></div><p id="courseMessage" class="form-message" role="status"></p><button class="button primary" type="submit">Save course &amp; tee</button></form>
+        <section class="course-library-panel" aria-labelledby="courseLibraryTitle"><div class="section-heading"><div><p class="eyebrow">Course book</p><h2 id="courseLibraryTitle">Saved tees</h2></div></div><div id="courseLibrary" class="course-list"></div></section>
+      </div></section>
     </main>
   </div>
-
-  <dialog class="settings-modal" id="settingsModal" aria-labelledby="settingsTitle">
-    <div class="settings-sheet">
-      <header class="settings-heading"><div><p class="eyebrow">Your Fairway</p><h2 id="settingsTitle">Settings</h2></div><button class="modal-close" id="closeSettings" type="button" aria-label="Close settings">×</button></header>
-      <div class="settings-panel active" data-settings-panel="main">
-        <p class="settings-intro">Choose an area. Rounds and courses stay securely tied to your account.</p>
-        <nav class="settings-categories" aria-label="Settings categories">
-          <button class="settings-category" type="button" data-settings-open="account"><span class="settings-category-icon">@</span><span><strong>Account</strong><small>Identity, cloud connection, and sign out</small></span><b aria-hidden="true">→</b></button>
-          <button class="settings-category" type="button" data-settings-open="appearance"><span class="settings-category-icon">◐</span><span><strong>Appearance</strong><small>Independent theme and layout density</small></span><b aria-hidden="true">→</b></button>
-          <button class="settings-category" type="button" data-settings-open="scoring"><span class="settings-category-icon">±</span><span><strong>Rounds &amp; Scoring</strong><small>How Fairway calculates your game</small></span><b aria-hidden="true">→</b></button>
-          <button class="settings-category" type="button" data-settings-open="privacy"><span class="settings-category-icon">◉</span><span><strong>Privacy</strong><small>Your current private-by-default setup</small></span><b aria-hidden="true">→</b></button>
-          <button class="settings-category" type="button" data-settings-open="data"><span class="settings-category-icon">◇</span><span><strong>Data</strong><small>Device migration and account reset</small></span><b aria-hidden="true">→</b></button>
-        </nav>
-      </div>
-      <section class="settings-panel settings-section" data-settings-panel="account" aria-labelledby="accountSettingsTitle">
-        <button class="settings-back" type="button" data-settings-back>← Settings</button>
-        <div class="settings-section-heading"><div><p class="eyebrow">Account</p><h3 id="accountSettingsTitle">Verified and connected</h3></div><span class="verified-chip">● Email verified</span></div>
-        <dl class="account-details"><div><dt>Signed in as</dt><dd id="settingsEmail">—</dd></div><div><dt>Cloud status</dt><dd id="settingsCloud">Connecting…</dd></div></dl>
-        <div class="settings-actions"><a class="button secondary" href="../account/?returnTo=/golf/">Open account page</a><a class="button secondary" href="../account/?returnTo=/golf/">Change or reset password</a><button class="button secondary" id="signOutButton" type="button">Sign out</button></div>
-      </section>
-      <section class="settings-panel settings-section" data-settings-panel="appearance" aria-labelledby="appearanceSettingsTitle">
-        <button class="settings-back" type="button" data-settings-back>← Settings</button>
-        <div class="settings-section-heading"><div><p class="eyebrow">Appearance</p><h3 id="appearanceSettingsTitle">Choose your course conditions</h3></div></div>
-        <fieldset class="theme-picker"><legend>Theme</legend>
-          <label><input type="radio" name="fairway-theme" value="classic"><span class="theme-swatch classic"><i></i><b>Classic</b><small>Fairway green</small></span></label>
-          <label><input type="radio" name="fairway-theme" value="clubhouse"><span class="theme-swatch clubhouse"><i></i><b>Clubhouse</b><small>Traditional premium</small></span></label>
-          <label><input type="radio" name="fairway-theme" value="links"><span class="theme-swatch links"><i></i><b>Links</b><small>Airy and coastal</small></span></label>
-          <label><input type="radio" name="fairway-theme" value="twilight"><span class="theme-swatch twilight"><i></i><b>Twilight</b><small>Evening golf</small></span></label>
-          <label><input type="radio" name="fairway-theme" value="caddie-black"><span class="theme-swatch caddie-black"><i></i><b>Caddie Black</b><small>Performance dark</small></span></label>
-        </fieldset>
-        <fieldset class="density-picker"><legend>Layout density</legend><label><input type="radio" name="fairway-density" value="comfortable"> Comfortable</label><label><input type="radio" name="fairway-density" value="compact"> Compact</label></fieldset>
-      </section>
-      <section class="settings-panel settings-section" data-settings-panel="scoring" aria-labelledby="scoringSettingsTitle">
-        <button class="settings-back" type="button" data-settings-back>← Settings</button><div class="settings-section-heading"><div><p class="eyebrow">Rounds &amp; Scoring</p><h3 id="scoringSettingsTitle">Transparent calculations</h3></div></div>
-        <div class="settings-note"><strong>Current scoring model</strong><p>Fairway totals all 18 holes, calculates score to par and score differential from course rating, slope, and PCC, then estimates a Handicap Index from eligible rounds.</p></div>
-      </section>
-      <section class="settings-panel settings-section" data-settings-panel="privacy" aria-labelledby="privacySettingsTitle">
-        <button class="settings-back" type="button" data-settings-back>← Settings</button><div class="settings-section-heading"><div><p class="eyebrow">Privacy</p><h3 id="privacySettingsTitle">Private by default</h3></div></div>
-        <div class="settings-note"><strong>Only you can see this account</strong><p>Your current rounds, courses, scores, and statistics are protected by per-user database rules. Social visibility controls will appear here only when those features exist.</p></div>
-      </section>
-      <section class="settings-panel settings-section" data-settings-panel="data" aria-labelledby="dataSettingsTitle">
-        <button class="settings-back" type="button" data-settings-back>← Settings</button><div class="settings-section-heading"><div><p class="eyebrow">Data</p><h3 id="dataSettingsTitle">Your golf record</h3></div></div>
-        <p class="settings-copy">Rounds and courses are stored in your private Supabase account. Interface preferences remain on this device.</p>
-        <button class="button secondary hidden" id="migrateButton" type="button">Move older device data to cloud</button>
-        <div class="danger-zone"><div><strong>Reset Fairway data</strong><p>Permanently removes every saved round and course, then restores the starter course list.</p></div><button id="resetButton" class="button danger" type="button">Reset account data</button></div>
-      </section>
-    </div>
-  </dialog>
-
-  <footer class="app-footer"><p>Fairway saves rounds and courses to your private account.</p></footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase.js?v=1"></script>
-  <script type="module" src="/shared/app-switcher.js?v=4"></script>
-  <script type="module" src="app.js?v=6"></script>
-</body>
-</html>
+  <dialog class="welcome-modal" id="welcomeModal" aria-labelledby="welcomeTitle"><div class="welcome-visual" aria-hidden="true"><svg viewBox="0 0 220 160"><path d="M20 137c42-52 79-47 111-72 28-22 48-13 70-42v114H20Z"/><path d="M83 116V31m0 5h55l-16 18 16 18H83"/><circle cx="83" cy="119" r="7"/></svg></div><div class="welcome-copy"><p class="eyebrow">Welcome to Fairway</p><h2 id="welcomeTitle">From first tee to season trend.</h2><p>Track the courses you play, record clean scorecards, and watch your golf take shape over time.</p><ol><li><span>1</span><div><strong>Add a course</strong><small>Save its tee, rating, slope, and par.</small></div></li><li><span>2</span><div><strong>Record a round</strong><small>Enter all 18 holes quickly.</small></div></li><li><span>3</span><div><strong>See your progress</strong><small>Fairway builds your history and trends.</small></div></li></ol><div class="welcome-actions"><button class="button secondary" id="skipWelcome" type="button">Skip</button><button class="button primary" id="startWelcome" type="button">Get started</button></div></div></dialog>
+  <dialog class="settings-modal" id="settingsModal" aria-labelledby="settingsTitle"><div class="settings-sheet"><header class="settings-heading"><div><p class="eyebrow">Your Fairway</p><h2 id="settingsTitle">Settings</h2></div><button class="modal-close" id="closeSettings" type="button" aria-label="Close settings">×</button></header>
+    <div class="settings-panel active" data-settings-panel="main"><p class="settings-intro">Account, appearance, scoring, and data controls.</p><nav class="settings-categories" aria-label="Settings categories">
+      <button class="settings-category" type="button" data-settings-open="account"><span class="settings-category-icon"><svg aria-hidden="true"><use href="#icon-user"/></svg></span><span><strong>Account</strong><small>Identity, cloud connection, and sign out</small></span><b aria-hidden="true">→</b></button><button class="settings-category" type="button" data-settings-open="appearance"><span class="settings-category-icon"><svg aria-hidden="true"><use href="#icon-palette"/></svg></span><span><strong>Appearance</strong><small>Independent theme and layout density</small></span><b aria-hidden="true">→</b></button><button class="settings-category" type="button" data-settings-open="scoring"><span class="settings-category-icon"><svg aria-hidden="true"><use href="#icon-round"/></svg></span><span><strong>Rounds &amp; scoring</strong><small>Calculations and first-time guide</small></span><b aria-hidden="true">→</b></button><button class="settings-category" type="button" data-settings-open="privacy"><span class="settings-category-icon"><svg aria-hidden="true"><use href="#icon-shield"/></svg></span><span><strong>Privacy</strong><small>Your private-by-default setup</small></span><b aria-hidden="true">→</b></button><button class="settings-category" type="button" data-settings-open="data"><span class="settings-category-icon"><svg aria-hidden="true"><use href="#icon-data"/></svg></span><span><strong>Data</strong><small>Device migration and account reset</small></span><b aria-hidden="true">→</b></button>
+    </nav></div>
+    <section class="settings-panel settings-section" data-settings-panel="account" aria-labelledby="accountSettingsTitle"><button class="settings-back" type="button" data-settings-back>← Settings</button><div class="settings-section-heading"><div><p class="eyebrow">Account</p><h3 id="accountSettingsTitle">Verified and connected</h3></div><span class="verified-chip">Email verified</span></div><dl class="account-details"><div><dt>Signed in as</dt><dd id="settingsEmail">—</dd></div><div><dt>Cloud status</dt><dd id="settingsCloud">Connecting…</dd></div></dl><div class="settings-actions"><a class="button secondary" href="../account/?returnTo=/golf/">Open account</a><a class="button secondary" href="../account/?returnTo=/golf/">Change password</a><button class="button secondary" id="signOutButton" type="button">Sign out</button></div></section>
+    <section class="settings-panel settings-section" data-settings-panel="appearance" aria-labelledby="appearanceSettingsTitle"><button class="settings-back" type="button" data-settings-back>← Settings</button><div class="settings-section-heading"><div><p class="eyebrow">Appearance</p><h3 id="appearanceSettingsTitle">Choose your course conditions</h3></div></div><fieldset class="theme-picker"><legend>Theme</legend><label><input type="radio" name="fairway-theme" value="classic"><span class="theme-swatch classic"><i></i><b>Classic</b><small>Fairway green</small></span></label><label><input type="radio" name="fairway-theme" value="clubhouse"><span class="theme-swatch clubhouse"><i></i><b>Clubhouse</b><small>Traditional premium</small></span></label><label><input type="radio" name="fairway-theme" value="links"><span class="theme-swatch links"><i></i><b>Links</b><small>Airy and coastal</small></span></label><label><input type="radio" name="fairway-theme" value="twilight"><span class="theme-swatch twilight"><i></i><b>Twilight</b><small>Evening golf</small></span></label><label><input type="radio" name="fairway-theme" value="caddie-black"><span class="theme-swatch caddie-black"><i></i><b>Caddie Black</b><small>Performance dark</small></span></label></fieldset><fieldset class="density-picker"><legend>Layout density</legend><label><input type="radio" name="fairway-density" value="comfortable"> Comfortable</label><label><input type="radio" name="fairway-density" value="compact"> Compact</label></fieldset></section>
+    <section class="settings-panel settings-section" data-settings-panel="scoring" aria-labelledby="scoringSettingsTitle"><button class="settings-back" type="button" data-settings-back>← Settings</button><div class="settings-section-heading"><div><p class="eyebrow">Rounds &amp; scoring</p><h3 id="scoringSettingsTitle">The way Fairway scores</h3></div></div><div class="settings-note"><strong>Difficulty-adjusted performance</strong><p>Fairway totals all 18 holes and calculates score differential from rating, slope, and PCC. It estimates a Handicap Index once enough eligible rounds exist.</p></div><button class="button secondary" id="replayWelcome" type="button">Replay getting started</button></section>
+    <section class="settings-panel settings-section" data-settings-panel="privacy" aria-labelledby="privacySettingsTitle"><button class="settings-back" type="button" data-settings-back>← Settings</button><div class="settings-section-heading"><div><p class="eyebrow">Privacy</p><h3 id="privacySettingsTitle">Private by default</h3></div></div><div class="settings-note"><strong>Only you can see your golf record</strong><p>Rounds, courses, scores, and statistics are protected by per-user database rules.</p></div></section>
+    <section class="settings-panel settings-section" data-settings-panel="data" aria-labelledby="dataSettingsTitle"><button class="settings-back" type="button" data-settings-back>← Settings</button><div class="settings-section-heading"><div><p class="eyebrow">Data</p><h3 id="dataSettingsTitle">Your golf record</h3></div></div><p class="settings-copy">Rounds and courses are stored in your private Supabase account. Interface preferences remain on this device.</p><button class="button secondary hidden" id="migrateButton" type="button">Move older device data to cloud</button><div class="danger-zone"><div><strong>Reset Fairway data</strong><p>Permanently removes every saved round and course. Your account returns to a clean slate.</p></div><button id="resetButton" class="button danger" type="button"><svg aria-hidden="true"><use href="#icon-trash"/></svg> Reset account data</button></div></section>
+  </div></dialog>
+  <footer class="app-footer"><p>Private by default. Your rounds and courses belong to your account.</p></footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase.js?v=1"></script><script type="module" src="/shared/app-switcher.js?v=4"></script><script type="module" src="app.js?v=7"></script>
+</body></html>
