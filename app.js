@@ -5,7 +5,7 @@ import {
   scoreDifferential,
   sumHoles
 } from "./calculations.js";
-import { mountEcosystemIdentity } from "/shared/identity.js";
+import { mountEcosystemProfileMenu } from "/shared/identity.js?v=3";
 
 const STORAGE_KEY = "fairway-log-v2";
 const SETTINGS_KEY = "fairway-settings-v1";
@@ -71,11 +71,9 @@ const elements = {
   storageStatus: document.getElementById("storageStatus"),
   migrateButton: document.getElementById("migrateButton"),
   signOutButton: document.getElementById("signOutButton"),
-  settingsTrigger: document.getElementById("settingsTrigger"),
   settingsModal: document.getElementById("settingsModal"),
   settingsEmail: document.getElementById("settingsEmail"),
-  settingsCloud: document.getElementById("settingsCloud")
-  ,welcomeModal: document.getElementById("welcomeModal")
+  welcomeModal: document.getElementById("welcomeModal")
 };
 
 initialize();
@@ -96,7 +94,7 @@ async function initialize() {
   try {
     state = await loadCloudState();
     elements.storageStatus.textContent = 'Cloud verified';
-    mountEcosystemIdentity({ client:cloudClient, user:currentUser });
+    void mountEcosystemProfileMenu({ client:cloudClient, user:currentUser, appId:'fairway', onSettings:openSettings, onSignOut:()=>cloudClient.auth.signOut() });
     elements.migrateButton.classList.toggle('hidden', !legacyState);
     document.body.classList.remove('auth-pending');
     renderAll();
@@ -156,11 +154,10 @@ function bindEvents() {
   elements.resetButton.addEventListener("click", resetData);
   elements.migrateButton.addEventListener("click", migrateLegacyData);
   elements.signOutButton.addEventListener("click", () => cloudClient.auth.signOut());
-  elements.settingsTrigger.addEventListener('click', openSettings);
   document.getElementById('closeSettings').addEventListener('click', () => elements.settingsModal.close());
   document.querySelectorAll('[data-settings-open]').forEach((button) => button.addEventListener('click', () => showSettingsPanel(button.dataset.settingsOpen)));
   document.querySelectorAll('[data-settings-back]').forEach((button) => button.addEventListener('click', () => showSettingsPanel('main')));
-  elements.settingsModal.addEventListener('close', () => { elements.settingsTrigger.setAttribute('aria-expanded', 'false'); showSettingsPanel('main', false); });
+  elements.settingsModal.addEventListener('close', () => showSettingsPanel('main', false));
   elements.settingsModal.addEventListener('change', saveSettingsFromControls);
   elements.holeGrid.addEventListener('click', handleScoreStep);
   elements.holeGrid.addEventListener('keydown', handleScoreKeys);
@@ -188,10 +185,10 @@ function showSettingsPanel(panel,moveFocus=true){
   elements.settingsModal.dataset.panel=panel;if(moveFocus)setTimeout(()=>elements.settingsModal.querySelector(panel==='main'?'[data-settings-open]':'[data-settings-back]')?.focus(),0);
 }
 function openSettings(){
-  elements.settingsEmail.textContent=currentUser?.email||'Signed in account';elements.settingsCloud.textContent=elements.storageStatus.textContent;
+  elements.settingsEmail.textContent=currentUser?.email||'Signed in account';
   document.querySelectorAll('input[name="fairway-theme"]').forEach((input)=>{input.checked=input.value===settings.theme});
   document.querySelectorAll('input[name="fairway-density"]').forEach((input)=>{input.checked=input.value===settings.density});
-  showSettingsPanel('main',false);elements.settingsModal.showModal();elements.settingsTrigger.setAttribute('aria-expanded','true');setTimeout(()=>elements.settingsModal.querySelector('[data-settings-open]')?.focus(),0);
+  showSettingsPanel('main',false);elements.settingsModal.showModal();setTimeout(()=>elements.settingsModal.querySelector('[data-settings-open]')?.focus(),0);
 }
 function saveSettingsFromControls(){
   const theme=document.querySelector('input[name="fairway-theme"]:checked')?.value||settings.theme;
