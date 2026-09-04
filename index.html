@@ -5,7 +5,7 @@
   <meta name="theme-color" id="themeColor" content="#10251d"><meta name="description" content="Fairway — private golf rounds, scorecards, and progress.">
   <title>Fairway</title>
   <script>try{const s=JSON.parse(localStorage.getItem('fairway-settings-v1')||'{}');const t=['classic','clubhouse','links','twilight','caddie-black'];document.documentElement.dataset.theme=t.includes(s.theme)?s.theme:'classic';document.documentElement.dataset.density=s.density==='compact'?'compact':'comfortable'}catch(e){document.documentElement.dataset.theme='classic';document.documentElement.dataset.density='comfortable'}</script>
-  <link rel="stylesheet" href="style.css?v=8"><link rel="stylesheet" href="/shared/app-switcher.css?v=3">
+  <link rel="stylesheet" href="style.css?v=9"><link rel="stylesheet" href="layout-fixes.css?v=1"><link rel="stylesheet" href="/shared/app-switcher.css?v=5"><link rel="stylesheet" href="/shared/identity.css?v=1">
 </head>
 <body class="auth-pending">
   <svg class="svg-library" aria-hidden="true">
@@ -23,7 +23,7 @@
   </svg>
   <header class="app-header"><div class="app-header-inner">
     <a class="brand" href="#dashboard" data-view-link="dashboard" aria-label="Fairway overview"><svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true"><path class="brand-green" d="M8 39c8-11 13-16 19-17 5-1 9 1 13-5v22H8Z"/><path d="M17 35V10m0 2h14l-4 5 4 5H17"/><circle cx="17" cy="36" r="2.5"/></svg><span><strong>Fairway</strong><small>Rounds · Courses · Progress</small></span></a>
-    <div class="header-actions"><div data-app-switcher="fairway"></div><span class="privacy-badge" id="storageStatus">Connecting securely…</span><button class="icon-label-button settings-trigger" id="settingsTrigger" type="button" aria-label="Open Fairway settings" aria-expanded="false"><svg aria-hidden="true"><use href="#icon-settings"/></svg><span>Settings</span></button></div>
+    <div class="header-actions"><div data-app-switcher="fairway"></div><a class="ecosystem-identity" data-ecosystem-identity href="/account/?returnTo=/golf/" aria-label="Open Account and Profile"><span class="identity-avatar" data-identity-avatar aria-hidden="true">A</span><span class="identity-label" data-identity-label>Account</span></a><span class="privacy-badge" id="storageStatus">Connecting securely…</span><button class="icon-label-button settings-trigger" id="settingsTrigger" type="button" aria-label="Open Fairway settings" aria-expanded="false"><svg aria-hidden="true"><use href="#icon-settings"/></svg><span>Settings</span></button></div>
   </div></header>
   <div class="app-layout">
     <nav class="side-nav" aria-label="Fairway navigation">
@@ -70,5 +70,5 @@
     <section class="settings-panel settings-section" data-settings-panel="data" aria-labelledby="dataSettingsTitle"><button class="settings-back" type="button" data-settings-back>← Settings</button><div class="settings-section-heading"><div><p class="eyebrow">Data</p><h3 id="dataSettingsTitle">Your golf record</h3></div></div><p class="settings-copy">Rounds and courses are stored in your private Supabase account. Interface preferences remain on this device.</p><button class="button secondary hidden" id="migrateButton" type="button">Move older device data to cloud</button><div class="danger-zone"><div><strong>Reset Fairway data</strong><p>Permanently removes every saved round and course. Your account returns to a clean slate.</p></div><button id="resetButton" class="button danger" type="button"><svg aria-hidden="true"><use href="#icon-trash"/></svg> Reset account data</button></div></section>
   </div></dialog>
   <footer class="app-footer"><p>Private by default. Your rounds and courses belong to your account.</p></footer>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase.js?v=1"></script><script type="module" src="/shared/app-switcher.js?v=4"></script><script type="module" src="app.js?v=8"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase.js?v=1"></script><script type="module" src="/shared/app-switcher.js?v=6"></script><script type="module" src="app.js?v=9"></script>
 </body></html>

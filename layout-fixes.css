@@ -1,0 +1,3 @@
+html,body,.app-layout,main,.view,.performance-section,.recent-section,.round-workspace,.round-entry,.round-section,.course-list,.round-list{max-width:100%;min-width:0}
+.round-list>*,.course-list>*{min-width:0}
+@media(max-width:760px){.round-list,.course-list{overflow-wrap:anywhere}}

@@ -5,6 +5,7 @@ import {
   scoreDifferential,
   sumHoles
 } from "./calculations.js";
+import { mountEcosystemIdentity } from "/shared/identity.js";
 
 const STORAGE_KEY = "fairway-log-v2";
 const SETTINGS_KEY = "fairway-settings-v1";
@@ -94,7 +95,8 @@ async function initialize() {
   currentUser = data.session.user;
   try {
     state = await loadCloudState();
-    elements.storageStatus.textContent = `Cloud verified · ${currentUser.email || 'signed in'}`;
+    elements.storageStatus.textContent = 'Cloud verified';
+    mountEcosystemIdentity({ client:cloudClient, user:currentUser });
     elements.migrateButton.classList.toggle('hidden', !legacyState);
     document.body.classList.remove('auth-pending');
     renderAll();
@@ -212,7 +214,7 @@ function fromCloudCourse(row){return{id:row.id,course:row.course,tee:row.tee,par
 function fromCloudRound(row){return{id:row.id,player:row.player,date:row.played_on,course:row.course,tee:row.tee,par:Number(row.par),courseRating:Number(row.course_rating),slope:Number(row.slope),pcc:Number(row.pcc),holes:row.holes.map(Number),front:Number(row.front),back:Number(row.back),total:Number(row.total),differential:Number(row.differential)}}
 function toCloudCourse(item){return{id:item.id,user_id:currentUser.id,course:item.course,tee:item.tee,par:Number(item.par),rating:Number(item.rating),slope:Number(item.slope)}}
 function toCloudRound(item){return{id:item.id,user_id:currentUser.id,player:item.player,played_on:item.date,course:item.course,tee:item.tee,par:Number(item.par),course_rating:Number(item.courseRating),slope:Number(item.slope),pcc:Number(item.pcc)||0,holes:item.holes.map(Number),front:Number(item.front),back:Number(item.back),total:Number(item.total),differential:Number(item.differential)}}
-async function saveCloud(table,row){elements.storageStatus.textContent='Saving…';const{error}=await cloudClient.from(table).upsert(row,{onConflict:'user_id,id'});if(error)throw error;elements.storageStatus.textContent=`Cloud verified · ${currentUser.email||'signed in'}`}
+async function saveCloud(table,row){elements.storageStatus.textContent='Saving…';const{error}=await cloudClient.from(table).upsert(row,{onConflict:'user_id,id'});if(error)throw error;elements.storageStatus.textContent='Cloud verified'}
 async function deleteCloud(table,id){const{error}=await cloudClient.from(table).delete().eq('user_id',currentUser.id).eq('id',id);if(error)throw error}
 
 async function migrateLegacyData(){
