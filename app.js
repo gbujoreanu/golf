@@ -98,6 +98,7 @@ async function initialize() {
     elements.migrateButton.classList.toggle('hidden', !legacyState);
     document.body.classList.remove('auth-pending');
     renderAll();
+    applyRoute();
     if (!hasSeenWelcome()) setTimeout(openWelcome, 250);
   } catch (loadError) {
     console.error(loadError); elements.storageStatus.textContent = 'Cloud load failed'; elements.storageStatus.classList.add('sync-error');
@@ -164,6 +165,7 @@ function bindEvents() {
   document.getElementById('skipWelcome').addEventListener('click', dismissWelcome);
   document.getElementById('startWelcome').addEventListener('click', startWelcome);
   document.getElementById('replayWelcome').addEventListener('click', () => { elements.settingsModal.close(); openWelcome(); });
+  window.addEventListener('hashchange', applyRoute);
 }
 
 function hasSeenWelcome(){try{return localStorage.getItem(ONBOARDING_KEY)==='seen'}catch(error){return false}}
@@ -226,13 +228,16 @@ async function migrateLegacyData(){
   finally{elements.migrateButton.disabled=false}
 }
 
-function showView(viewName) {
+function showView(viewName,updateRoute=true) {
   activeView = viewName;
   elements.views.forEach((view) => view.classList.toggle("active", view.dataset.viewPanel === viewName));
   elements.navButtons.forEach((button) => button.classList.toggle("active", button.dataset.view === viewName));
   if (viewName === "new-round") (state.courses.length ? elements.roundCourse : document.querySelector('[data-add-course]'))?.focus({ preventScroll: true });
+  if(updateRoute&&location.hash!==`#${viewName}`)history.replaceState(null,'',`#${viewName}`);
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
+
+function applyRoute(){const view=location.hash.slice(1);if(['dashboard','new-round','rounds','courses','friends'].includes(view)&&view!==activeView)showView(view,false)}
 
 function renderAll() {
   renderCourseOptions();
