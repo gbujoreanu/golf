@@ -1,7 +1,7 @@
 import {
   listRelationshipPeople,setFollow,requestFriend,cancelFriendRequest,respondFriend,
   removeFriend,blockUser,personLabel,socialError
-} from '/shared/social.js?v=3';
+} from '/shared/social.js?v=4';
 import { renderIdentityAvatar } from '/shared/identity.js?v=3';
 
 const client = window.AppAuth?.client;
@@ -45,9 +45,10 @@ async function handleClick(event) {
   const tab=event.target.closest('[data-fairway-connection-tab]');
   if(tab){active=tab.dataset.fairwayConnectionTab;updateTabs();await loadActive();return;}
   const button=event.target.closest('[data-social-action]');if(!button)return;
+  const action=button.dataset.socialAction,id=button.dataset.userId,requestId=button.dataset.requestId;
+  if(action==='plan-round'){window.dispatchEvent(new CustomEvent('fairway:plan-round',{detail:{userId:id}}));return;}
   button.disabled=true;
   try {
-    const action=button.dataset.socialAction,id=button.dataset.userId,requestId=button.dataset.requestId;
     if(action==='follow')await setFollow(client,id,true);
     if(action==='unfollow')await setFollow(client,id,false);
     if(action==='friend')await requestFriend(client,id);
@@ -96,7 +97,7 @@ function golferRow(person){
   actions.append(action(person.is_following?'Unfollow':person.is_follower?'Follow back':'Follow',person.is_following?'unfollow':'follow',person));
   if(person.request_direction==='incoming')actions.append(action('Accept','accept',person,'primary'),action('Decline','decline',person));
   else if(person.request_direction==='outgoing')actions.append(action('Cancel request','cancel-request',person));
-  else if(person.is_friend)actions.append(action('Remove friend','remove-friend',person));
+  else if(person.is_friend)actions.append(action('Plan round','plan-round',person,'primary'),action('Remove friend','remove-friend',person));
   else actions.append(action('Add friend','friend',person,'primary'));
   actions.append(action('Block','block',person,'quiet-danger'));
   row.append(avatar,identity,actions);return row;

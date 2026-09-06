@@ -235,9 +235,10 @@ function showView(viewName,updateRoute=true) {
   if (viewName === "new-round") (state.courses.length ? elements.roundCourse : document.querySelector('[data-add-course]'))?.focus({ preventScroll: true });
   if(updateRoute&&location.hash!==`#${viewName}`)history.replaceState(null,'',`#${viewName}`);
   window.scrollTo({ top: 0, behavior: "smooth" });
+  window.dispatchEvent(new CustomEvent('fairway:view',{detail:viewName}));
 }
 
-function applyRoute(){const view=location.hash.slice(1);if(['dashboard','new-round','rounds','courses','friends'].includes(view)&&view!==activeView)showView(view,false)}
+function applyRoute(){const view=location.hash.slice(1);if(['dashboard','upcoming','new-round','rounds','courses','friends'].includes(view)&&view!==activeView)showView(view,false)}
 
 function renderAll() {
   renderCourseOptions();

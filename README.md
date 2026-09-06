@@ -11,6 +11,7 @@ Fairway is a private, account-based golf scorecard and progress tracker. Confirm
 - Estimated Handicap Index using the World Handicap System fewer-than-20-round selection table and the best 8 of the latest 20 once enough rounds are available
 - Average score, recent form, personal best, and a score trend
 - Player and course filters
+- Future tee-time planning with private invitations to existing Fairway friends
 - Five independent themes and responsive layouts for desktop, tablet, and phone
 
 ## Run locally
@@ -33,7 +34,7 @@ npm test
 
 ## Data and handicap notes
 
-Rounds and custom courses are saved in Supabase tables protected by Row Level Security. New accounts start empty. The legacy `fairway-log-v2` browser record is read only as an optional one-time migration source; interface and onboarding preferences may remain on the device.
+Rounds, planned tee times, invitations, and custom courses are saved in Supabase tables protected by Row Level Security. New accounts start empty. The legacy `fairway-log-v2` browser record is read only as an optional one-time migration source; interface and onboarding preferences may remain on the device.
 
 The displayed Handicap Index is an estimate for personal tracking, not an official GHIN Handicap Index. The app supports Course Rating, Slope Rating, and manual PCC entry, but does not currently apply hole-by-hole Net Double Bogey adjustments, exceptional score reductions, or handicap caps.
 
