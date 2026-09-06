@@ -30,10 +30,12 @@ async function load(){
 }
 
 function render(){
-  const invites=rounds.filter(round=>!round.is_host&&round.viewer_status==='invited');
-  const confirmed=rounds.filter(round=>round.is_host||round.viewer_status==='accepted');
+  const invites=rounds.filter(round=>round.status==='planned'&&!round.is_host&&round.viewer_status==='invited');
+  const confirmed=rounds.filter(round=>round.status!=='completed'&&(round.is_host||round.viewer_status==='accepted'));
+  const completed=rounds.filter(round=>round.status==='completed'&&(round.is_host||round.viewer_status==='accepted'));
   renderList(root.querySelector('[data-round-invites]'),invites,'No pending invitations.');
   renderList(root.querySelector('[data-upcoming-list]'),confirmed,'No upcoming rounds.');
+  renderList(root.querySelector('[data-completed-list]'),completed,'No completed shared rounds yet.');
   root.querySelector('[data-plan-round]').disabled=!courses.length;
   root.querySelector('[data-no-courses]').hidden=Boolean(courses.length);
 }
@@ -66,8 +68,9 @@ function roundRow(round){
   if(round.notes){const notes=document.createElement('p');notes.className='tee-notes';notes.textContent=round.notes;body.append(notes)}
   const actions=document.createElement('div');actions.className='tee-actions';
   if(round.viewer_status==='invited')actions.append(button('Accept','accept','primary'),button('Decline','decline'));
-  else if(round.is_host)actions.append(button('Edit','edit'),button('Invite friends','invite'),button('Cancel round','cancel','quiet-danger'));
-  else actions.append(button('Leave round','leave','quiet-danger'));
+  else if(round.status==='completed')actions.append(button('View scorecard','score','primary'));
+  else if(round.is_host)actions.append(button(round.status==='in_progress'?'Score round':'Start round','score','primary'),...(round.status==='planned'?[button('Edit','edit'),button('Invite friends','invite'),button('Cancel round','cancel','quiet-danger')]:[]));
+  else actions.append(button(round.status==='in_progress'?'Score round':'Start round','score','primary'),...(round.status==='planned'?[button('Leave round','leave','quiet-danger')]:[]));
   article.append(date,body,actions);return article;
 }
 
@@ -78,6 +81,7 @@ async function handleAction(event){
   const control=event.target.closest('[data-round-action]');if(!control)return;
   const round=rounds.find(item=>item.id===control.closest('[data-round-id]')?.dataset.roundId);if(!round)return;
   const action=control.dataset.roundAction;
+  if(action==='score'){location.hash=`scorecard/${round.id}`;return}
   if(action==='edit'||action==='invite')return openPlan(round,action==='invite');
   if(action==='cancel'&&!confirm('Cancel this planned round for everyone?'))return;
   if(action==='leave'&&!confirm('Leave this planned round?'))return;

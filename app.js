@@ -233,12 +233,12 @@ function showView(viewName,updateRoute=true) {
   elements.views.forEach((view) => view.classList.toggle("active", view.dataset.viewPanel === viewName));
   elements.navButtons.forEach((button) => button.classList.toggle("active", button.dataset.view === viewName));
   if (viewName === "new-round") (state.courses.length ? elements.roundCourse : document.querySelector('[data-add-course]'))?.focus({ preventScroll: true });
-  if(updateRoute&&location.hash!==`#${viewName}`)history.replaceState(null,'',`#${viewName}`);
+  if(updateRoute&&viewName!=='scorecard'&&location.hash!==`#${viewName}`)history.replaceState(null,'',`#${viewName}`);
   window.scrollTo({ top: 0, behavior: "smooth" });
   window.dispatchEvent(new CustomEvent('fairway:view',{detail:viewName}));
 }
 
-function applyRoute(){const view=location.hash.slice(1);if(['dashboard','upcoming','new-round','rounds','courses','friends'].includes(view)&&view!==activeView)showView(view,false)}
+function applyRoute(){const route=location.hash.slice(1);const view=route.startsWith('scorecard/')?'scorecard':route;if(!['dashboard','upcoming','new-round','rounds','courses','friends','scorecard'].includes(view))return;if(view!==activeView)showView(view,false);else window.dispatchEvent(new CustomEvent('fairway:view',{detail:view}))}
 
 function renderAll() {
   renderCourseOptions();
