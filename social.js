@@ -94,10 +94,11 @@ function golferRow(person){
   if(person.request_direction==='outgoing')states.append(state('Request sent'));
   identity.append(states);
   const actions=document.createElement('div');actions.className='golfer-actions';
+  if(person.is_friend)actions.append(action('Plan round','plan-round',person,'primary'));
   actions.append(action(person.is_following?'Unfollow':person.is_follower?'Follow back':'Follow',person.is_following?'unfollow':'follow',person));
   if(person.request_direction==='incoming')actions.append(action('Accept','accept',person,'primary'),action('Decline','decline',person));
   else if(person.request_direction==='outgoing')actions.append(action('Cancel request','cancel-request',person));
-  else if(person.is_friend)actions.append(action('Plan round','plan-round',person,'primary'),action('Remove friend','remove-friend',person));
+  else if(person.is_friend)actions.append(action('Remove friend','remove-friend',person));
   else actions.append(action('Add friend','friend',person,'primary'));
   actions.append(action('Block','block',person,'quiet-danger'));
   row.append(avatar,identity,actions);return row;
