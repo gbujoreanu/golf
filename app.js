@@ -238,7 +238,7 @@ function showView(viewName,updateRoute=true) {
   window.dispatchEvent(new CustomEvent('fairway:view',{detail:viewName}));
 }
 
-function applyRoute(){const route=location.hash.slice(1);const view=route.startsWith('scorecard/')?'scorecard':route;if(!['dashboard','upcoming','new-round','rounds','courses','friends','scorecard'].includes(view))return;if(view!==activeView)showView(view,false);else window.dispatchEvent(new CustomEvent('fairway:view',{detail:view}))}
+function applyRoute(){const route=location.hash.slice(1);const view=route.startsWith('scorecard/')?'scorecard':route.startsWith('upcoming/')?'upcoming':route;if(!['dashboard','upcoming','new-round','rounds','courses','friends','scorecard'].includes(view))return;if(view!==activeView)showView(view,false);else window.dispatchEvent(new CustomEvent('fairway:view',{detail:view}))}
 
 function renderAll() {
   renderCourseOptions();

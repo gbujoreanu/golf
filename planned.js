@@ -38,6 +38,8 @@ function render(){
   renderList(root.querySelector('[data-completed-list]'),completed,'No completed shared rounds yet.');
   root.querySelector('[data-plan-round]').disabled=!courses.length;
   root.querySelector('[data-no-courses]').hidden=Boolean(courses.length);
+  const linkedId=location.hash.match(/^#upcoming\/([a-f0-9-]{36})$/i)?.[1];
+  if(linkedId){const linked=[...root.querySelectorAll('[data-round-id]')].find(row=>row.dataset.roundId===linkedId);if(linked){linked.tabIndex=-1;linked.focus({preventScroll:true});linked.scrollIntoView({block:'center'});}else setMessage('This round is no longer available to you.');}
 }
 
 function renderList(output,items,emptyCopy){
