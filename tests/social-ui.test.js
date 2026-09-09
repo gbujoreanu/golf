@@ -12,11 +12,13 @@ test("Fairway friend actions have an intentional hierarchy", async () => {
   ]);
 
   const plan = script.indexOf("action('Plan round','plan-round',person,'primary')");
-  const follow = script.indexOf("actions.append(action(person.is_following?'Unfollow'");
+  const follow = script.indexOf("(person.is_following?secondary:actions).append");
   assert.ok(plan >= 0 && plan < follow, "Plan round should lead the friend action row");
   assert.match(styles, /\.social-action\{[^}]*background:var\(--surface-panel\)/);
   assert.match(styles, /data-social-action="remove-friend"/);
   assert.match(styles, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(html, /social\.css\?v=3/);
-  assert.match(html, /social\.js\?v=4/);
+  assert.match(script, /secondary.append\(action\('Remove friend'/);
+  assert.match(script, /dialog.showModal\(\)/);
+  assert.match(html, /social\.css\?v=4/);
+  assert.match(html, /social\.js\?v=5/);
 });
