@@ -20,5 +20,5 @@ test("Fairway friend actions have an intentional hierarchy", async () => {
   assert.match(script, /secondary.append\(action\('Remove friend'/);
   assert.match(script, /dialog.showModal\(\)/);
   assert.match(html, /social\.css\?v=4/);
-  assert.match(html, /social\.js\?v=5/);
+  assert.match(html, /social\.js\?v=6/);
 });
