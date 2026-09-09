@@ -41,3 +41,17 @@ test('Repeated taps cannot submit concurrent relationship mutations',async()=>{
   assert.equal(calls,1);finish();await first;
   assert.equal(context.button.disabled,false);
 });
+
+for(const [action,helper,expected] of [
+  ['follow','setFollow',['synthetic',true]],['unfollow','setFollow',['synthetic',false]],
+  ['friend','requestFriend',['synthetic']],['cancel-request','cancelFriendRequest',['request']],
+  ['accept','respondFriend',['request','accepted']],['decline','respondFriend',['request','declined']],
+  ['remove-friend','removeFriend',['synthetic']],['block','blockUser',['synthetic']]
+])test(`${action} keeps the existing relationship API contract`,async()=>{
+  const context=harness();let args;
+  context[helper]=async(_client,...rest)=>{args=rest};
+  context.confirmAction=async()=>true;context.loadActive=async()=>{};
+  context.button={dataset:{socialAction:action,userId:'synthetic',requestId:'request'},disabled:false,setAttribute(){},removeAttribute(){}};
+  await vm.runInContext("handleClick({target:{closest:s=>s==='[data-social-action]'?button:null}})",context);
+  assert.deepEqual(args,expected);assert.equal(context.button.disabled,false);
+});

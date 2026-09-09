@@ -88,6 +88,7 @@ async function handleClick(event) {
 function confirmAction(kind,trigger){
   return new Promise(resolve=>{
     const dialog=document.createElement('dialog');dialog.className='social-confirm';
+    dialog.addEventListener('click',event=>event.stopPropagation());
     const title=document.createElement('h2');title.id='socialConfirmTitle';title.textContent=kind==='block'?'Block this golfer?':'Remove this friend?';
     const copy=document.createElement('p');copy.textContent=kind==='block'?'This removes your connection and pending requests. You can manage blocked accounts in Account.':'This removes your friendship. Your saved private rounds remain unchanged.';
     const controls=document.createElement('div');controls.className='social-confirm-actions';
