@@ -4,13 +4,12 @@ import { loadGroupScorecard,savePlayerScorecard,completeGroupRound } from './gro
 
 const client=window.AppAuth?.client;
 const root=document.querySelector('[data-group-scorecard]');
-let round=null,roundId='',scorecardScrollLeft=0,saveTimers=new Map();
+let round=null,roundId='',saveTimers=new Map();
 
 if(client&&root){
   root.addEventListener('click',handleClick);
   root.addEventListener('change',handleChange);
   root.addEventListener('keydown',handleScoreKeys);
-  root.addEventListener('scroll',handleScoreScroll,true);
   window.addEventListener('fairway:view',route);
   route();
 }
@@ -33,8 +32,7 @@ function render(){
   root.querySelector('[data-scorecard-title]').textContent=round.course_name;
   root.querySelector('[data-scorecard-meta]').textContent=`${round.tee_name} tees · Par ${round.par} · ${when.toLocaleDateString([], {month:'long',day:'numeric',year:'numeric'})}`;
   root.querySelector('[data-scorecard-state]').textContent=round.status==='completed'?'Completed':round.status==='in_progress'?'In progress':'Ready to score';
-  root.querySelector('[data-scorecard-table]').replaceChildren(scorecard());
-  root.querySelector('.group-score-table-wrap').scrollLeft=scorecardScrollLeft;
+  root.querySelector('[data-scorecard-table]').replaceChildren(scorecard(),mobileScorecard());
   renderSummary();
   updateCompletionControls();
 }
@@ -53,7 +51,7 @@ function completedHoles(player){return scores(player).filter(Boolean).length}
 function allCardsComplete(){return round.participants.length>0&&round.participants.every(p=>completedHoles(p)===18)}
 
 function scorecard(){
-  const wrap=document.createElement('div');wrap.className='group-score-table-wrap';wrap.tabIndex=0;wrap.setAttribute('aria-label','Group scorecard, horizontally scrollable when needed');
+  const wrap=document.createElement('div');wrap.className='group-score-table-wrap';wrap.tabIndex=0;wrap.setAttribute('aria-label','Group scorecard');
   const table=document.createElement('table');table.className='group-score-table';
   const head=document.createElement('thead');const groups=document.createElement('tr');groups.className='scorecard-groups';
   const golfer=th('Golfer','player');golfer.rowSpan=2;groups.append(golfer,groupHeading('Front nine',9),groupHeading('Back nine',9),groupHeading('Round',4,'totals-group'));
@@ -67,6 +65,22 @@ function scorecard(){
     tr.append(summaryCell(player,'front'),summaryCell(player,'back'),summaryCell(player,'total',true),summaryCell(player,'par'));body.append(tr);
   });table.append(body);wrap.append(table);return wrap;
 }
+function mobileScorecard(){
+  const card=document.createElement('div');card.className='mobile-vertical-scorecard';card.setAttribute('aria-label','Vertical group scorecard');
+  [['Front nine',0,9],['Back nine',9,18]].forEach(([label,start,end])=>{
+    const section=document.createElement('section');section.className='mobile-nine-section';
+    const heading=document.createElement('header');heading.className='mobile-nine-heading';const title=document.createElement('strong');title.textContent=label;const range=document.createElement('span');range.textContent=`Holes ${start+1}–${end}`;heading.append(title,range);section.append(heading);
+    for(let index=start;index<end;index++){
+      const hole=document.createElement('article');hole.className='mobile-hole-block';
+      const number=document.createElement('header');number.className='mobile-hole-number';const caption=document.createElement('small');caption.textContent='Hole';const strong=document.createElement('strong');strong.textContent=String(index+1);number.append(caption,strong);
+      const players=document.createElement('div');players.className='mobile-hole-players';
+      round.participants.forEach(player=>{const row=document.createElement('div');row.className=`mobile-hole-player${player.id===round.viewer_id?' is-viewer':''}`;const identity=document.createElement('div');identity.className='mobile-hole-identity';const avatar=document.createElement('span');avatar.className='group-avatar';renderIdentityAvatar(avatar,player);const name=document.createElement('span');name.textContent=player.id===round.viewer_id?'You':personLabel(player);identity.append(avatar,name);row.append(identity,scoreInput(player,index,scores(player)[index],'mobile'));players.append(row)});
+      hole.append(number,players);section.append(hole);
+    }
+    card.append(section);
+  });
+  return card;
+}
 function groupHeading(text,span,className=''){const el=th(text,className);el.colSpan=span;el.scope='colgroup';return el}
 function th(text,className=''){const el=document.createElement('th');el.textContent=text;if(className)el.className=className;return el}
 function summaryCell(player,kind,strong=false){const td=document.createElement('td');td.className=`score-total${strong?' grand':''}${kind==='par'?' score-to-par':''}`;td.dataset.summaryPlayer=player.id;td.dataset.summaryKind=kind;td.textContent=summaryValue(player,kind);return td}
@@ -77,9 +91,8 @@ function summaryValue(player,kind){const playerScores=scores(player),done=comple
 function renderSummary(){const rail=root.querySelector('[data-scorecard-summary]');rail.replaceChildren();round.participants.forEach(player=>{const card=document.createElement('article');card.className=`scorecard-player-summary${player.id===round.viewer_id?' is-viewer':''}`;const name=document.createElement('div');name.className='scorecard-summary-name';const strong=document.createElement('strong');strong.textContent=player.id===round.viewer_id?'You':personLabel(player);const small=document.createElement('small');small.textContent=player.scorecard_status==='final'?'Card final':`${completedHoles(player)}/18 holes`;name.append(strong,small);card.append(name);[['F9','front'],['B9','back'],['Total','total'],['To par','par']].forEach(([label,kind])=>{const stat=document.createElement('span');stat.className=`scorecard-stat${kind==='par'?' score-to-par':''}`;const caption=document.createElement('small');caption.textContent=label;const value=document.createElement('strong');value.textContent=summaryValue(player,kind);stat.append(caption,value);card.append(stat)});rail.append(card)})}
 function refreshComputed(){round.participants.forEach(player=>{root.querySelectorAll(`[data-summary-player="${player.id}"]`).forEach(cell=>cell.textContent=summaryValue(player,cell.dataset.summaryKind));const progress=root.querySelector(`[data-player-progress="${player.id}"]`);if(progress)progress.textContent=player.scorecard_status==='final'?'Final':`${completedHoles(player)}/18 holes`});renderSummary();updateCompletionControls()}
 
-function handleChange(event){const input=event.target.closest('[data-score-player]');if(!input)return;const player=round.participants.find(p=>p.id===input.dataset.scorePlayer);if(!player||!canEdit(player))return;const value=Number(input.value);player.holes=scores(player);player.holes[Number(input.dataset.hole)]=Number.isInteger(value)&&value>=1&&value<=20?value:null;player.scorecard_status='draft';queueSave(player);refreshComputed()}
-function handleScoreKeys(event){const input=event.target.closest('[data-score-player]');if(!input||!['Enter','ArrowRight','ArrowLeft'].includes(event.key))return;event.preventDefault();const nextHole=Math.max(0,Math.min(17,Number(input.dataset.hole)+(event.key==='ArrowLeft'?-1:1)));root.querySelector(`[data-score-player="${input.dataset.scorePlayer}"][data-hole="${nextHole}"]`)?.focus()}
-function handleScoreScroll(event){if(event.target.classList?.contains('group-score-table-wrap'))scorecardScrollLeft=event.target.scrollLeft}
+function handleChange(event){const input=event.target.closest('[data-score-player]');if(!input)return;const player=round.participants.find(p=>p.id===input.dataset.scorePlayer);if(!player||!canEdit(player))return;const value=Number(input.value),hole=Number(input.dataset.hole),score=Number.isInteger(value)&&value>=1&&value<=20?value:null;player.holes=scores(player);player.holes[hole]=score;player.scorecard_status='draft';root.querySelectorAll(`[data-score-player="${player.id}"][data-hole="${hole}"]`).forEach(peer=>{if(peer!==input)peer.value=score??''});queueSave(player);refreshComputed()}
+function handleScoreKeys(event){const input=event.target.closest('[data-score-player]');if(!input||!['Enter','ArrowRight','ArrowLeft'].includes(event.key))return;event.preventDefault();const nextHole=Math.max(0,Math.min(17,Number(input.dataset.hole)+(event.key==='ArrowLeft'?-1:1)));root.querySelector(`[data-score-player="${input.dataset.scorePlayer}"][data-hole="${nextHole}"][data-context="${input.dataset.context}"]`)?.focus()}
 async function handleClick(event){
   if(event.target.closest('[data-scorecard-back]')){location.hash='upcoming';return}
   if(event.target.closest('[data-finalize-card]')){const player=round.participants.find(p=>p.id===round.viewer_id);if(!player||completedHoles(player)!==18)return;await save(player,'final');return}
