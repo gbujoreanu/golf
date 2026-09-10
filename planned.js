@@ -55,7 +55,7 @@ function roundRow(round){
   const body=document.createElement('div');body.className='tee-time-main';
   const title=document.createElement('div');title.className='tee-time-title';
   const heading=document.createElement('h3');heading.textContent=round.course_name;
-  const time=document.createElement('p');time.textContent=`${when.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})} · ${round.tee_name} tees`;
+  const time=document.createElement('p');time.textContent=`${when.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})} · ${round.hole_count||18} holes · ${round.tee_name} tees`;
   title.append(heading,time);
   const host=document.createElement('p');host.className='tee-host';host.textContent=round.is_host?'You are hosting':`Hosted by ${round.host_name}`;
   const people=document.createElement('div');people.className='tee-people';
@@ -103,11 +103,12 @@ async function openPlan(round=null,inviteOnly=false){
   editingId=round?.id||null;
   form.dataset.inviteOnly=String(inviteOnly);
   document.getElementById('planDialogTitle').textContent=round?(inviteOnly?'Invite more golfers':'Edit tee time'):'Plan a round';
-  document.getElementById('planCourse').disabled=inviteOnly;document.getElementById('planDate').disabled=inviteOnly;document.getElementById('planTime').disabled=inviteOnly;document.getElementById('planNotes').disabled=inviteOnly;
+  document.getElementById('planCourse').disabled=inviteOnly;document.getElementById('planDate').disabled=inviteOnly;document.getElementById('planTime').disabled=inviteOnly;document.getElementById('planLength').disabled=inviteOnly;document.getElementById('planNotes').disabled=inviteOnly;
   document.getElementById('savePlan').textContent=inviteOnly?'Send invitations':round?'Save changes':'Plan round';
   fillCourses(round?.course_id);
   const at=round?new Date(round.scheduled_at):new Date(Date.now()+86400000);at.setMinutes(Math.ceil(at.getMinutes()/15)*15,0,0);
   document.getElementById('planDate').value=localDate(at);document.getElementById('planTime').value=at.toTimeString().slice(0,5);document.getElementById('planNotes').value=round?.notes||'';
+  document.getElementById('planLength').value=String(round?.hole_count||18);
   renderFriendChoices(round);
   if(!dialog.open)dialog.showModal();setTimeout(()=>dialog.querySelector('select:not(:disabled),input:not(:disabled)')?.focus(),0);
 }
@@ -125,7 +126,7 @@ async function savePlan(event){
   try{
     const inviteOnly=form.dataset.inviteOnly==='true';let id=editingId;
     if(!inviteOnly){const date=document.getElementById('planDate').value,time=document.getElementById('planTime').value;const playAt=new Date(`${date}T${time}`);if(!date||!time||Number.isNaN(playAt.valueOf())||playAt<=new Date())throw new Error('Choose a future tee time.');
-      const values={courseId:document.getElementById('planCourse').value,playAt:playAt.toISOString(),timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC',notes:document.getElementById('planNotes').value.trim()};
+      const values={courseId:document.getElementById('planCourse').value,playAt:playAt.toISOString(),timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC',notes:document.getElementById('planNotes').value.trim(),holeCount:Number(document.getElementById('planLength').value)};
       if(id)await updatePlannedRound(client,id,values);else id=await createPlannedRound(client,values);
     }
     const selected=[...document.querySelectorAll('#planFriends input:checked')].map(input=>input.value);if(selected.length)await invitePlayers(client,id,selected);
@@ -133,7 +134,7 @@ async function savePlan(event){
   }catch(error){setDialogMessage(friendlyError(error),true)}finally{submit.disabled=false}
 }
 
-function resetForm(){form.reset();editingId=null;form.dataset.inviteOnly='false';setDialogMessage('');['planCourse','planDate','planTime','planNotes'].forEach(id=>document.getElementById(id).disabled=false)}
+function resetForm(){form.reset();editingId=null;form.dataset.inviteOnly='false';setDialogMessage('');['planCourse','planDate','planTime','planLength','planNotes'].forEach(id=>document.getElementById(id).disabled=false)}
 function localDate(date){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`}
 function setMessage(text,error=false){const el=root.querySelector('[data-planned-message]');el.textContent=text;el.classList.toggle('sync-error',error)}
 function setDialogMessage(text,error=false){const el=document.getElementById('planMessage');el.textContent=text;el.classList.toggle('sync-error',error)}

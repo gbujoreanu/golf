@@ -20,7 +20,8 @@ export async function loadPlannedRoundData(client) {
 
 export async function createPlannedRound(client, values) {
   const { data, error } = await client.rpc('fairway_create_round_session', {
-    course_row_id:values.courseId, play_at:values.playAt, zone:values.timeZone, note_text:values.notes
+    course_row_id:values.courseId, play_at:values.playAt, zone:values.timeZone, note_text:values.notes,
+    round_holes:Number(values.holeCount)===9?9:18
   });
   if (error) throw error;
   return data;
@@ -29,7 +30,7 @@ export async function createPlannedRound(client, values) {
 export async function updatePlannedRound(client, id, values) {
   const { error } = await client.rpc('fairway_update_planned_round', {
     round_session_id:id, course_row_id:values.courseId, play_at:values.playAt,
-    zone:values.timeZone, note_text:values.notes
+    zone:values.timeZone, note_text:values.notes, round_holes:Number(values.holeCount)===9?9:18
   });
   if (error) throw error;
 }

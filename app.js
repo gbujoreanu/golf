@@ -5,6 +5,7 @@ import {
   scoreDifferential,
   sumHoles
 } from "./calculations.js";
+import { normalizeHoleCount, teeSnapshotForLength } from './round-lengths.js';
 import { mountEcosystemProfileMenu } from "/shared/identity.js?v=3";
 
 const STORAGE_KEY = "fairway-log-v2";
@@ -42,6 +43,7 @@ const elements = {
   roundCourse: document.getElementById("roundCourse"),
   roundTee: document.getElementById("roundTee"),
   roundPcc: document.getElementById("roundPcc"),
+  roundLength: document.getElementById("roundLength"),
   holeGrid: document.getElementById("holeGrid"),
   frontTotal: document.getElementById("frontTotal"),
   backTotal: document.getElementById("backTotal"),
@@ -143,6 +145,7 @@ function bindEvents() {
   });
   elements.roundTee.addEventListener("change", updateRoundSummary);
   elements.roundPcc.addEventListener("input", updateRoundSummary);
+  elements.roundLength.addEventListener("change", () => { createHoleInputs(); updateRoundSummary(); });
   elements.clearScores.addEventListener("click", () => {
     document.querySelectorAll(".hole-score").forEach((input) => { input.value = ""; });
     updateRoundSummary();
@@ -210,9 +213,9 @@ async function loadCloudState() {
   return { courses:coursesResult.data.map(fromCloudCourse), rounds:roundsResult.data.map(fromCloudRound) };
 }
 function fromCloudCourse(row){return{id:row.id,course:row.course,tee:row.tee,par:Number(row.par),rating:Number(row.rating),slope:Number(row.slope)}}
-function fromCloudRound(row){return{id:row.id,player:row.player,date:row.played_on,course:row.course,tee:row.tee,par:Number(row.par),courseRating:Number(row.course_rating),slope:Number(row.slope),pcc:Number(row.pcc),holes:row.holes.map(Number),front:Number(row.front),back:Number(row.back),total:Number(row.total),differential:Number(row.differential)}}
+function fromCloudRound(row){return{id:row.id,player:row.player,date:row.played_on,course:row.course,tee:row.tee,holeCount:Number(row.hole_count)||18,par:Number(row.par),courseRating:Number(row.course_rating),slope:Number(row.slope),pcc:Number(row.pcc),holes:row.holes.map(Number),front:Number(row.front),back:row.back==null?null:Number(row.back),total:Number(row.total),differential:Number(row.differential)}}
 function toCloudCourse(item){return{id:item.id,user_id:currentUser.id,course:item.course,tee:item.tee,par:Number(item.par),rating:Number(item.rating),slope:Number(item.slope)}}
-function toCloudRound(item){return{id:item.id,user_id:currentUser.id,player:item.player,played_on:item.date,course:item.course,tee:item.tee,par:Number(item.par),course_rating:Number(item.courseRating),slope:Number(item.slope),pcc:Number(item.pcc)||0,holes:item.holes.map(Number),front:Number(item.front),back:Number(item.back),total:Number(item.total),differential:Number(item.differential)}}
+function toCloudRound(item){return{id:item.id,user_id:currentUser.id,player:item.player,played_on:item.date,course:item.course,tee:item.tee,hole_count:Number(item.holeCount)||18,par:Number(item.par),course_rating:Number(item.courseRating),slope:Number(item.slope),pcc:Number(item.pcc)||0,holes:item.holes.map(Number),front:Number(item.front),back:item.back==null?null:Number(item.back),total:Number(item.total),differential:Number(item.differential)}}
 async function saveCloud(table,row){elements.storageStatus.textContent='Saving…';const{error}=await cloudClient.from(table).upsert(row,{onConflict:'user_id,id'});if(error)throw error;elements.storageStatus.textContent='Cloud verified'}
 async function deleteCloud(table,id){const{error}=await cloudClient.from(table).delete().eq('user_id',currentUser.id).eq('id',id);if(error)throw error}
 
@@ -295,7 +298,12 @@ function selectedTee() {
 
 function createHoleInputs() {
   const nine=(start,label)=>`<section class="nine-card"><header><div><span>${label}</span><small>Holes ${start}–${start+8}</small></div><strong id="${start===1?'frontNineLive':'backNineLive'}">—</strong></header><div class="nine-grid">${Array.from({length:9},(_,offset)=>{const hole=start+offset;return `<div class="hole-field"><span>Hole ${hole}</span><div class="score-stepper"><button type="button" data-score-step="-1" data-hole-target="${hole}" aria-label="Decrease hole ${hole} score">−</button><input class="hole-score" data-hole="${hole}" type="number" min="1" max="20" inputmode="numeric" aria-label="Hole ${hole} score" required><button type="button" data-score-step="1" data-hole-target="${hole}" aria-label="Increase hole ${hole} score">+</button></div></div>`}).join('')}</div></section>`;
-  elements.holeGrid.innerHTML=nine(1,'Front nine')+nine(10,'Back nine');
+  elements.holeGrid.innerHTML=nine(1,'Front nine')+(roundHoleCount()===18?nine(10,'Back nine'):'');
+}
+
+function roundHoleCount(){return normalizeHoleCount(elements.roundLength?.value)}
+function roundTeeSnapshot(tee,holeCount=roundHoleCount()){
+  return teeSnapshotForLength(tee,holeCount);
 }
 
 function handleScoreStep(event){const button=event.target.closest('[data-score-step]');if(!button)return;const input=elements.holeGrid.querySelector(`[data-hole="${button.dataset.holeTarget}"]`);const current=Number(input.value)||4;input.value=String(Math.min(20,Math.max(1,current+Number(button.dataset.scoreStep))));input.focus();updateRoundSummary()}
@@ -311,16 +319,20 @@ function updateRoundSummary() {
   const back = sumHoles(holes.slice(9));
   const total = front + back;
   const tee = selectedTee();
+  const holeCount=roundHoleCount();
+  const snapshot=tee?roundTeeSnapshot(tee,holeCount):null;
   const completed=holes.filter((score)=>Number.isInteger(score)&&score>0).length;
   elements.frontTotal.textContent = completed ? front : '—';
   elements.backTotal.textContent = completed > 9 ? back : '—';
+  elements.frontTotal.previousElementSibling.textContent=holeCount===9?'9 holes':'Front 9';
+  elements.backTotal.closest('div').hidden=holeCount===9;
   elements.roundTotal.textContent = completed ? total : '—';
-  elements.roundToPar.textContent = total && tee ? formatToPar(total - tee.par) : "—";
-  elements.roundDifferential.textContent = total && tee ? scoreDifferential(total, tee.rating, tee.slope, elements.roundPcc.value) : "—";
-  elements.holeProgress.textContent=`${completed} / 18`;elements.scoreProgress.value=completed;
-  elements.saveRoundButton.disabled=!(completed===18&&tee&&elements.playerName.value.trim()&&elements.roundDate.value);
+  elements.roundToPar.textContent = total && snapshot ? formatToPar(total - snapshot.par) : "—";
+  elements.roundDifferential.textContent = total && tee ? scoreDifferential(total, snapshot.rating, tee.slope, elements.roundPcc.value) : "—";
+  elements.holeProgress.textContent=`${completed} / ${holeCount}`;elements.scoreProgress.max=holeCount;elements.scoreProgress.value=completed;
+  elements.saveRoundButton.disabled=!(completed===holeCount&&tee&&elements.playerName.value.trim()&&elements.roundDate.value);
   const frontLive=document.getElementById('frontNineLive'),backLive=document.getElementById('backNineLive');if(frontLive)frontLive.textContent=completed?front:'—';if(backLive)backLive.textContent=completed>9?back:'—';
-  document.querySelectorAll('.round-steps li').forEach((step,index)=>step.classList.toggle('active',index===0&&!tee||index===1&&tee&&!elements.playerName.value.trim()||index===2&&tee&&elements.playerName.value.trim()&&completed<18||index===3&&completed===18));
+  document.querySelectorAll('.round-steps li').forEach((step,index)=>step.classList.toggle('active',index===0&&!tee||index===1&&tee&&!elements.playerName.value.trim()||index===2&&tee&&elements.playerName.value.trim()&&completed<holeCount||index===3&&completed===holeCount));
 }
 
 async function saveRound(event) {
@@ -328,9 +340,11 @@ async function saveRound(event) {
   const holes = getHoleScores();
   const tee = selectedTee();
   const player = elements.playerName.value.trim();
-  const complete = holes.length === 18 && holes.every((score) => Number.isInteger(score) && score > 0);
+  const holeCount=roundHoleCount();
+  const snapshot=tee?roundTeeSnapshot(tee,holeCount):null;
+  const complete = holes.length === holeCount && holes.every((score) => Number.isInteger(score) && score > 0);
   if (!tee || !player || !elements.roundDate.value || !complete) {
-    showMessage(elements.roundMessage, "Complete the player, date, course, tee, and all 18 scores.", true);
+    showMessage(elements.roundMessage, `Complete the player, date, course, tee, and all ${holeCount} scores.`, true);
     return;
   }
 
@@ -341,15 +355,16 @@ async function saveRound(event) {
     date: elements.roundDate.value,
     course: tee.course,
     tee: tee.tee,
-    par: tee.par,
-    courseRating: tee.rating,
+    holeCount,
+    par: snapshot.par,
+    courseRating: snapshot.rating,
     slope: tee.slope,
     pcc: Number(elements.roundPcc.value) || 0,
     holes,
     front: sumHoles(holes.slice(0, 9)),
-    back: sumHoles(holes.slice(9)),
+    back: holeCount===18?sumHoles(holes.slice(9)):null,
     total,
-    differential: scoreDifferential(total, tee.rating, tee.slope, elements.roundPcc.value)
+    differential: scoreDifferential(total, snapshot.rating, tee.slope, elements.roundPcc.value)
   };
   try { await saveCloud('golf_rounds',toCloudRound(round)); }
   catch(error) { console.error(error); showMessage(elements.roundMessage,'That round could not be saved. Please try again.',true); return; }
@@ -358,6 +373,8 @@ async function saveRound(event) {
   elements.playerName.value = player;
   elements.roundDate.value = new Date().toISOString().slice(0, 10);
   elements.roundPcc.value = 0;
+  elements.roundLength.value = '18';
+  createHoleInputs();
   document.querySelectorAll(".hole-score").forEach((input) => { input.value = ""; });
   renderAll();
   updateRoundSummary();
@@ -400,7 +417,7 @@ function renderDashboard() {
   elements.dashboardData.hidden=!hasRounds;
   if(!hasRounds){
     const hasCourses=state.courses.length>0;
-    elements.dashboardEmpty.innerHTML=`<div class="hero-route"><span>${hasCourses?'Ready for the first tee':'Start your course book'}</span><strong>01</strong></div><div><p class="eyebrow">${hasCourses?'Your first round':'Clean slate'}</p><h1>${hasCourses?'Your scorecard is ready.':'Your next round starts here.'}</h1><p>${hasCourses?'Choose a saved course, enter 18 scores, and Fairway will begin building your history.':'Add the course and tee you actually play. Fairway never fills your account with sample golf data.'}</p><button class="button primary" type="button" data-go-to="${hasCourses?'new-round':'courses'}">${hasCourses?'Record your first round':'Add your first course'}</button></div><svg viewBox="0 0 420 260" aria-hidden="true"><path d="M10 235c92-110 161-95 222-153 55-52 99-28 178-72v225H10Z"/><path d="M151 195V50m0 10h96l-27 28 27 28h-96"/><circle cx="151" cy="200" r="11"/></svg>`;
+    elements.dashboardEmpty.innerHTML=`<div class="hero-route"><span>${hasCourses?'Ready for the first tee':'Start your course book'}</span><strong>01</strong></div><div><p class="eyebrow">${hasCourses?'Your first round':'Clean slate'}</p><h1>${hasCourses?'Your scorecard is ready.':'Your next round starts here.'}</h1><p>${hasCourses?'Choose a saved course, select 9 or 18 holes, and Fairway will begin building your history.':'Add the course and tee you actually play. Fairway never fills your account with sample golf data.'}</p><button class="button primary" type="button" data-go-to="${hasCourses?'new-round':'courses'}">${hasCourses?'Record your first round':'Add your first course'}</button></div><svg viewBox="0 0 420 260" aria-hidden="true"><path d="M10 235c92-110 161-95 222-153 55-52 99-28 178-72v225H10Z"/><path d="M151 195V50m0 10h96l-27 28 27 28h-96"/><circle cx="151" cy="200" r="11"/></svg>`;
     return;
   }
   elements.handicapStat.textContent = handicap.index ?? "—";
@@ -461,7 +478,7 @@ function renderRoundHistory() {
   elements.roundHistory.innerHTML = rounds.map((round) => `
     <article class="history-card">
       <div class="history-score"><strong>${round.total}</strong><span>${formatToPar(round.total - round.par)}</span></div>
-      <div class="history-main"><h3>${escapeHtml(round.course)}</h3><p>${formatDate(round.date)} <span>·</span> ${escapeHtml(round.tee)} tees <span>·</span> ${escapeHtml(round.player)}</p></div>
+      <div class="history-main"><h3>${escapeHtml(round.course)}</h3><p>${formatDate(round.date)} <span>·</span> ${round.holeCount||18} holes <span>·</span> ${escapeHtml(round.tee)} tees <span>·</span> ${escapeHtml(round.player)}</p></div>
       <div class="history-metrics"><span><small>Differential</small><strong>${round.differential ?? scoreDifferential(round.total, round.courseRating, round.slope, round.pcc)}</strong></span><span><small>Rating / slope</small><strong>${round.courseRating} / ${round.slope}</strong></span></div>
       <button class="icon-button danger" type="button" data-delete-round="${round.id}" aria-label="Delete ${escapeHtml(round.course)} round">Delete</button>
     </article>
@@ -469,7 +486,7 @@ function renderRoundHistory() {
 }
 
 function roundCardMarkup(round) {
-  return `<article class="round-row"><div class="round-score"><strong>${round.total}</strong><span>${formatToPar(round.total - round.par)}</span></div><div><h3>${escapeHtml(round.course)}</h3><p>${escapeHtml(round.player)} · ${escapeHtml(round.tee)} · ${formatDate(round.date)}</p></div><div class="round-diff"><small>Differential</small><strong>${round.differential ?? scoreDifferential(round.total, round.courseRating, round.slope, round.pcc)}</strong></div></article>`;
+  return `<article class="round-row"><div class="round-score"><strong>${round.total}</strong><span>${formatToPar(round.total - round.par)}</span></div><div><h3>${escapeHtml(round.course)}</h3><p>${escapeHtml(round.player)} · ${round.holeCount||18} holes · ${escapeHtml(round.tee)} · ${formatDate(round.date)}</p></div><div class="round-diff"><small>Differential</small><strong>${round.differential ?? scoreDifferential(round.total, round.courseRating, round.slope, round.pcc)}</strong></div></article>`;
 }
 
 function renderCourseLibrary() {

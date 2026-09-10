@@ -8,7 +8,7 @@ export async function loadGroupScorecard(client, roundId) {
 }
 
 export async function savePlayerScorecard(client, roundId, playerId, holes, status='draft') {
-  const scores=Array.from({length:18},(_,index)=>{
+  const scores=holes.map((_,index)=>{
     const value=Number(holes[index]);
     return Number.isInteger(value)&&value>0 ? value : null;
   });
