@@ -37,3 +37,16 @@ test("scorecard keeps round totals and accessible score entry", async () => {
   assert.match(script, /savePlayerScorecard/);
   assert.match(script, /data-complete-round/);
 });
+
+test("completed shared rounds refresh the normal history and statistics state", async () => {
+  const [scorecardScript, appScript] = await Promise.all([
+    readFile(new URL("group-scorecard.js", root), "utf8"),
+    readFile(new URL("app.js", root), "utf8")
+  ]);
+
+  assert.match(scorecardScript, /completeGroupRound\(client,round\.id\)/);
+  assert.match(scorecardScript, /fairway:personal-history-updated/);
+  assert.match(appScript, /addEventListener\('fairway:personal-history-updated'/);
+  assert.match(appScript, /state = await loadCloudState\(\)/);
+  assert.match(appScript, /renderAll\(\)/);
+});

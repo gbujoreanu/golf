@@ -98,7 +98,7 @@ function handleScoreKeys(event){const input=event.target.closest('[data-score-pl
 async function handleClick(event){
   if(event.target.closest('[data-scorecard-back]')){location.hash='upcoming';return}
   if(event.target.closest('[data-finalize-card]')){const player=round.participants.find(p=>p.id===round.viewer_id);if(!player||completedHoles(player)!==holeCount())return;await save(player,'final');return}
-  if(event.target.closest('[data-complete-round]')){const button=event.target.closest('button');button.disabled=true;try{for(const player of round.participants){if(player.scorecard_status!=='final')await savePlayerScorecard(client,round.id,player.id,scores(player),'final')}await completeGroupRound(client,round.id);await load()}catch(error){setMessage(socialError(error),true);button.disabled=false}}
+  if(event.target.closest('[data-complete-round]')){const button=event.target.closest('button');button.disabled=true;try{for(const player of round.participants){if(player.scorecard_status!=='final')await savePlayerScorecard(client,round.id,player.id,scores(player),'final')}await completeGroupRound(client,round.id);window.dispatchEvent(new CustomEvent('fairway:personal-history-updated',{detail:{roundId:round.id}}));await load()}catch(error){setMessage(socialError(error),true);button.disabled=false}}
 }
 function queueSave(player){clearTimeout(saveTimers.get(player.id));setMessage('Saving…');saveTimers.set(player.id,setTimeout(()=>save(player,'draft'),450))}
 async function save(player,status){

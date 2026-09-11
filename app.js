@@ -118,6 +118,14 @@ function loadLegacyState() {
 }
 
 function bindEvents() {
+  window.addEventListener('fairway:personal-history-updated', async () => {
+    try {
+      state = await loadCloudState();
+      renderAll();
+    } catch (error) {
+      console.error(error);
+    }
+  });
   elements.navButtons.forEach((button) => button.addEventListener("click", () => showView(button.dataset.view)));
   document.addEventListener("click", (event) => {
     const destination = event.target.closest("[data-go-to]");

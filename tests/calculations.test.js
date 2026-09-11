@@ -41,6 +41,20 @@ test("calculates an initial index from three rounds", () => {
   assert.equal(result.usedCount, 1);
 });
 
+test("source-linked shared results use the normal handicap calculation path", () => {
+  const rounds = [
+    { id: "shared-nine", sourceSessionId: "session-9", holeCount: 9, date: "2026-09-01", total: 40, courseRating: 35.7, slope: 128, pcc: 0 },
+    { id: "shared-eighteen", sourceSessionId: "session-18", holeCount: 18, date: "2026-09-02", total: 84, courseRating: 71.4, slope: 128, pcc: 0 },
+    { id: "individual", date: "2026-09-03", total: 82, courseRating: 71.4, slope: 128, pcc: 0 }
+  ];
+
+  const result = calculateHandicapIndex(rounds);
+  assert.equal(result.totalCount, 3);
+  assert.equal(result.usedCount, 1);
+  assert.deepEqual(result.usedRoundIds, ["shared-nine"]);
+  assert.equal(result.index, 1.8);
+});
+
 test("calculates course handicap with rating minus par", () => {
   assert.equal(courseHandicap(10, 125, 71.5, 72), 11);
 });
