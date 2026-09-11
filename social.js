@@ -151,7 +151,7 @@ function golferRow(person){
 
 function emptyState(){
   const copy={friends:['No Fairway friends yet.','Find golfers you know and send a friend request.'],requests:['No friend requests.','Incoming and outgoing requests will appear here.'],following:['You are not following anyone yet.','Follow golfers without sharing private rounds.'],followers:['No followers yet.','Followers never gain access to private rounds.'],golfers:searchQuery?['No golfers found.','Try another display name or @handle.']:['Find golfers.','Search the ecosystem by display name or @handle.']}[active];
-  const empty=document.createElement('div');empty.className='social-empty';const flag=document.createElement('span');flag.textContent='○';flag.setAttribute('aria-hidden','true');const strong=document.createElement('strong');strong.textContent=copy[0];const text=document.createElement('p');text.textContent=copy[1];empty.append(flag,strong,text);return empty;
+  const empty=document.createElement('div');empty.className='social-empty';const flag=document.createElement('span');flag.setAttribute('aria-hidden','true');const strong=document.createElement('strong');strong.textContent=copy[0];const text=document.createElement('p');text.textContent=copy[1];empty.append(flag,strong,text);return empty;
 }
 
 function action(label,name,person,className=''){const button=document.createElement('button');button.type='button';button.className=`button social-action ${className}`;button.textContent=label;button.dataset.socialAction=name;button.dataset.userId=person.id;if(person.request_id)button.dataset.requestId=person.request_id;return button;}

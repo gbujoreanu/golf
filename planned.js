@@ -13,6 +13,8 @@ let user=null,rounds=[],courses=[],friends=[],editingId=null,prefillFriendId=nul
 
 if(client&&root){
   root.addEventListener('click',handleAction);
+  root.addEventListener('keydown',event=>{if(event.key==='Escape'){const menu=event.target.closest('.tee-more[open]');if(menu){menu.open=false;menu.querySelector('summary')?.focus({preventScroll:true});event.preventDefault()}}});
+  document.addEventListener('click',event=>{if(!event.target.closest('.tee-more'))root.querySelectorAll('.tee-more[open]').forEach(menu=>{menu.open=false})});
   form.addEventListener('submit',savePlan);
   dialog.querySelectorAll('[data-close-plan]').forEach(control=>control.addEventListener('click',()=>dialog.close()));
   dialog.addEventListener('close',resetForm);
@@ -32,51 +34,75 @@ async function load(){
 function render(){
   const invites=rounds.filter(round=>round.status==='planned'&&!round.is_host&&round.viewer_status==='invited');
   const confirmed=rounds.filter(round=>round.status!=='completed'&&(round.is_host||round.viewer_status==='accepted'));
+  const hosted=confirmed.filter(round=>round.is_host);
+  const joining=confirmed.filter(round=>!round.is_host);
   const completed=rounds.filter(round=>round.status==='completed'&&(round.is_host||round.viewer_status==='accepted'));
-  renderList(root.querySelector('[data-round-invites]'),invites,'No pending invitations.');
-  renderList(root.querySelector('[data-upcoming-list]'),confirmed,'No upcoming rounds.');
-  renderList(root.querySelector('[data-completed-list]'),completed,'No completed shared rounds yet.');
+  renderList(root.querySelector('[data-round-invites]'),invites,'No pending invitations.','invitation');
+  renderUpcomingBoard(root.querySelector('[data-upcoming-list]'),hosted,joining);
+  renderList(root.querySelector('[data-completed-list]'),completed,'No completed shared rounds yet.','completed');
+  root.querySelector('[data-invite-count]').textContent=countLabel(invites.length,'pending');
+  root.querySelector('[data-upcoming-count]').textContent=countLabel(confirmed.length,'round');
+  root.querySelector('[data-completed-count]').textContent=countLabel(completed.length,'round');
   root.querySelector('[data-plan-round]').disabled=!courses.length;
   root.querySelector('[data-no-courses]').hidden=Boolean(courses.length);
   const linkedId=location.hash.match(/^#upcoming\/([a-f0-9-]{36})$/i)?.[1];
   if(linkedId){const linked=[...root.querySelectorAll('[data-round-id]')].find(row=>row.dataset.roundId===linkedId);if(linked){linked.tabIndex=-1;linked.focus({preventScroll:true});linked.scrollIntoView({block:'center'});}else setMessage('This round is no longer available to you.');}
 }
 
-function renderList(output,items,emptyCopy){
+function renderUpcomingBoard(output,hosted,joining){
   output.replaceChildren();
-  if(!items.length){const empty=document.createElement('div');empty.className='tee-time-empty';empty.innerHTML=`<strong>${emptyCopy}</strong><span>${emptyCopy.includes('invitations')?'Invitations from Fairway friends will appear here.':'Choose a saved course and invite friends when you are ready.'}</span>`;output.append(empty);return}
-  items.forEach(round=>output.append(roundRow(round)));
+  [['Hosting',hosted,'Rounds you organize'],['Joining',joining,'Rounds hosted by friends']].forEach(([title,items,copy])=>{
+    const group=document.createElement('section');group.className='tee-time-group';
+    const heading=document.createElement('header');const label=document.createElement('div');
+    const name=document.createElement('h3');name.textContent=title;const detail=document.createElement('span');detail.textContent=copy;label.append(name,detail);
+    const count=document.createElement('strong');count.textContent=String(items.length);count.setAttribute('aria-label',countLabel(items.length,'round'));heading.append(label,count);group.append(heading);
+    const list=document.createElement('div');list.className='tee-time-group-list';
+    if(items.length)items.forEach(round=>list.append(roundRow(round,round.is_host?'hosted':'joining')));
+    else{const empty=document.createElement('p');empty.className='tee-group-empty';empty.textContent=title==='Hosting'?'No rounds hosted by you.':'No rounds you are joining.';list.append(empty)}
+    group.append(list);output.append(group);
+  });
 }
 
-function roundRow(round){
-  const article=document.createElement('article');article.className='tee-time-row';article.dataset.roundId=round.id;
+function renderList(output,items,emptyCopy,context='upcoming'){
+  output.replaceChildren();
+  if(!items.length){const empty=document.createElement('div');empty.className='tee-time-empty';empty.innerHTML=`<strong>${emptyCopy}</strong><span>${emptyCopy.includes('invitations')?'Invitations from Fairway friends will appear here.':'Choose a saved course and invite friends when you are ready.'}</span>`;output.append(empty);return}
+  items.forEach(round=>output.append(roundRow(round,context)));
+}
+
+function roundRow(round,context='upcoming'){
+  const article=document.createElement('article');article.className=`tee-time-row is-${context}`;article.dataset.roundId=round.id;
   const when=new Date(round.scheduled_at);const date=document.createElement('div');date.className='tee-date';
   date.innerHTML=`<span>${when.toLocaleDateString([], {month:'short'}).toUpperCase()}</span><strong>${when.toLocaleDateString([], {day:'2-digit'})}</strong><small>${when.toLocaleDateString([], {weekday:'short'})}</small>`;
   const body=document.createElement('div');body.className='tee-time-main';
-  const title=document.createElement('div');title.className='tee-time-title';
-  const heading=document.createElement('h3');heading.textContent=round.course_name;
-  const time=document.createElement('p');time.textContent=`${when.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})} · ${round.hole_count||18} holes · ${round.tee_name} tees`;
-  title.append(heading,time);
-  const host=document.createElement('p');host.className='tee-host';host.textContent=round.is_host?'You are hosting':`Hosted by ${round.host_name}`;
+  const title=document.createElement('div');title.className='tee-time-title';const titleCopy=document.createElement('div');
+  const heading=document.createElement('h3');heading.textContent=round.course_name;const tee=document.createElement('p');tee.textContent=`${round.tee_name} tees`;titleCopy.append(heading,tee);title.append(titleCopy,statusLabel(round,context));
+  const facts=document.createElement('dl');facts.className='tee-facts';facts.append(fact('Tee time',when.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})),fact('Round',`${round.hole_count||18} holes`));
+  const host=document.createElement('p');host.className='tee-host';host.textContent=round.is_host?'Hosted by you':`Hosted by ${round.host_name}`;
   const people=document.createElement('div');people.className='tee-people';
-  (round.participants||[]).filter(p=>p.invitation_status!=='declined').forEach(person=>{
+  const visiblePeople=(round.participants||[]).filter(person=>person.invitation_status!=='declined');
+  visiblePeople.forEach(person=>{
     const chip=document.createElement('span');chip.className=`tee-person status-${person.invitation_status}`;
     const avatar=document.createElement('i');renderIdentityAvatar(avatar,person);const label=document.createElement('b');label.textContent=person.id===user?.id?'You':personLabel(person);
     const state=document.createElement('small');state.textContent=person.role==='host'?'Host':person.invitation_status==='accepted'?'Going':'Invited';chip.append(avatar,label,state);
     if(round.is_host&&person.role!=='host'&&['invited','accepted'].includes(person.invitation_status)){const remove=document.createElement('button');remove.type='button';remove.className='tee-person-remove';remove.dataset.roundAction='remove';remove.dataset.userId=person.id;remove.setAttribute('aria-label',`Remove ${personLabel(person)} from round`);remove.textContent='×';chip.append(remove)}
     people.append(chip);
   });
-  body.append(title,host,people);
+  const peopleLabel=document.createElement('span');peopleLabel.className='tee-people-label';peopleLabel.textContent=`Players · ${visiblePeople.length}`;
+  body.append(title,facts,host,peopleLabel,people);
   if(round.notes){const notes=document.createElement('p');notes.className='tee-notes';notes.textContent=round.notes;body.append(notes)}
   const actions=document.createElement('div');actions.className='tee-actions';
   if(round.viewer_status==='invited')actions.append(button('Accept','accept','primary'),button('Decline','decline'));
   else if(round.status==='completed')actions.append(button('View scorecard','score','primary'));
-  else if(round.is_host)actions.append(button(round.status==='in_progress'?'Score round':'Start round','score','primary'),...(round.status==='planned'?[button('Edit','edit'),button('Invite friends','invite'),button('Cancel round','cancel','quiet-danger')]:[]));
-  else actions.append(button(round.status==='in_progress'?'Score round':'Start round','score','primary'),...(round.status==='planned'?[button('Leave round','leave','quiet-danger')]:[]));
+  else if(round.is_host)actions.append(button(round.status==='in_progress'?'Open scorecard':'Start scorecard','score','primary'),...(round.status==='planned'?[roundMenu(round,[button('Edit details','edit'),button('Invite golfers','invite'),button('Cancel round','cancel','quiet-danger')])]:[]));
+  else actions.append(button(round.status==='in_progress'?'Open scorecard':'Start scorecard','score','primary'),...(round.status==='planned'?[roundMenu(round,[button('Leave round','leave','quiet-danger')])]:[]));
   article.append(date,body,actions);return article;
 }
 
 function button(label,action,className=''){const el=document.createElement('button');el.type='button';el.className=`button ${className}`;el.dataset.roundAction=action;el.textContent=label;return el}
+function fact(label,value){const item=document.createElement('div');const term=document.createElement('dt');term.textContent=label;const detail=document.createElement('dd');detail.textContent=value;item.append(term,detail);return item}
+function countLabel(count,singular){return `${count} ${singular}${count===1?'':'s'}`}
+function statusLabel(round,context){const label=document.createElement('span');label.className='tee-status';label.textContent=round.status==='completed'?'Complete':round.status==='in_progress'?'In progress':context==='invitation'?'Awaiting you':round.is_host?'Hosting':'Going';return label}
+function roundMenu(round,controls){const menu=document.createElement('details');menu.className='tee-more';const summary=document.createElement('summary');summary.textContent='Manage';summary.setAttribute('aria-label',`Manage ${round.course_name} round`);const panel=document.createElement('div');panel.className='tee-more-panel';controls.forEach(control=>panel.append(control));menu.append(summary,panel);menu.addEventListener('toggle',()=>{if(menu.open)root.querySelectorAll('.tee-more[open]').forEach(other=>{if(other!==menu)other.open=false})});return menu}
 
 async function handleAction(event){
   if(event.target.closest('[data-plan-round]'))return openPlan();
