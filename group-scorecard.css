@@ -11,6 +11,7 @@
 .group-scorecard-heading h1{font-size:clamp(2.8rem,5.2vw,5.8rem);overflow-wrap:anywhere}
 .group-scorecard-heading .lede{overflow-wrap:anywhere}
 .scorecard-heading-actions{display:flex;align-items:center;gap:12px}
+.scorecard-heading-actions .button{min-height:44px}
 .round-state{padding:6px 10px;border:1px solid var(--border-default);font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 
 .group-score-shell{width:100%;min-width:0;overflow:hidden;border:1px solid var(--border-default);border-top:4px solid var(--action-primary-bg);background:var(--surface-panel);box-shadow:0 18px 42px color-mix(in srgb,var(--text-primary) 8%,transparent)}
@@ -60,6 +61,7 @@
   .group-scorecard-heading{align-items:flex-start}
   .group-scorecard-heading h1{font-size:clamp(2.4rem,11.5vw,3.35rem);line-height:.94}
   .scorecard-heading-actions{width:100%;justify-content:space-between}
+  .scorecard-heading-actions{display:grid;grid-template-columns:1fr 1fr}.scorecard-heading-actions .round-state{grid-column:1/-1;justify-self:start}.scorecard-heading-actions .button{width:100%}
   .group-score-shell{border-right:0;border-left:0;box-shadow:none}
   .scorecard-summary-rail{display:grid;grid-template-columns:1fr;overflow:visible}
   .scorecard-player-summary{grid-template-columns:minmax(94px,1fr) repeat(4,minmax(42px,auto));min-width:0;padding:12px 14px;gap:10px;border-right:0;border-bottom:1px solid var(--border-default)}

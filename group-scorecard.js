@@ -1,6 +1,7 @@
 import { renderIdentityAvatar } from '/shared/identity.js?v=3';
 import { personLabel,socialError } from '/shared/social.js?v=4';
 import { loadGroupScorecard,savePlayerScorecard,completeGroupRound } from './group-scorecards.js';
+import { downloadScorecardPng } from './scorecard-export.js';
 
 const client=window.AppAuth?.client;
 const root=document.querySelector('[data-group-scorecard]');
@@ -33,6 +34,7 @@ function render(){
   root.querySelector('[data-scorecard-meta]').textContent=`${holeCount()} holes · ${round.tee_name} tees · Par ${round.par} · ${when.toLocaleDateString([], {month:'long',day:'numeric',year:'numeric'})}`;
   root.querySelector('[data-scorecard-cue]').textContent=`All ${holeCount()} holes, arranged vertically`;
   root.querySelector('[data-scorecard-state]').textContent=round.status==='completed'?'Completed':round.status==='in_progress'?'In progress':'Ready to score';
+  root.querySelector('[data-export-scorecard]').hidden=round.status!=='completed';
   root.querySelector('[data-scorecard-table]').replaceChildren(scorecard(),mobileScorecard());
   renderSummary();
   updateCompletionControls();
@@ -97,6 +99,7 @@ function handleChange(event){const input=event.target.closest('[data-score-playe
 function handleScoreKeys(event){const input=event.target.closest('[data-score-player]');if(!input||!['Enter','ArrowRight','ArrowLeft'].includes(event.key))return;event.preventDefault();const nextHole=Math.max(0,Math.min(holeCount()-1,Number(input.dataset.hole)+(event.key==='ArrowLeft'?-1:1)));root.querySelector(`[data-score-player="${input.dataset.scorePlayer}"][data-hole="${nextHole}"][data-context="${input.dataset.context}"]`)?.focus()}
 async function handleClick(event){
   if(event.target.closest('[data-scorecard-back]')){location.hash='upcoming';return}
+  if(event.target.closest('[data-export-scorecard]')){const button=event.target.closest('button');if(round.status!=='completed')return;button.disabled=true;const original=button.textContent;button.textContent='Preparing…';try{const when=new Date(round.scheduled_at);await downloadScorecardPng({course:round.course_name,date:round.scheduled_at,tee:round.tee_name,teeTime:when.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}),holeCount:holeCount(),par:round.par,participants:round.participants.map(player=>({id:player.id,name:personLabel(player),holes:scores(player)}))})}catch(error){setMessage(error.message||'That scorecard image could not be created.',true)}finally{button.disabled=false;button.textContent=original}return}
   if(event.target.closest('[data-finalize-card]')){const player=round.participants.find(p=>p.id===round.viewer_id);if(!player||completedHoles(player)!==holeCount())return;await save(player,'final');return}
   if(event.target.closest('[data-complete-round]')){const button=event.target.closest('button');button.disabled=true;try{for(const player of round.participants){if(player.scorecard_status!=='final')await savePlayerScorecard(client,round.id,player.id,scores(player),'final')}await completeGroupRound(client,round.id);window.dispatchEvent(new CustomEvent('fairway:personal-history-updated',{detail:{roundId:round.id}}));await load()}catch(error){setMessage(socialError(error),true);button.disabled=false}}
 }

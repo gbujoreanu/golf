@@ -6,6 +6,7 @@ import {
   sumHoles
 } from "./calculations.js";
 import { normalizeHoleCount, teeSnapshotForLength } from './round-lengths.js';
+import { downloadScorecardPng } from './scorecard-export.js';
 import { mountEcosystemProfileMenu } from "/shared/identity.js?v=3";
 
 const STORAGE_KEY = "fairway-log-v2";
@@ -488,7 +489,7 @@ function renderRoundHistory() {
       <div class="history-score"><strong>${round.total}</strong><span>${formatToPar(round.total - round.par)}</span></div>
       <div class="history-main"><h3>${escapeHtml(round.course)}</h3><p>${formatDate(round.date)} <span>·</span> ${round.holeCount||18} holes <span>·</span> ${escapeHtml(round.tee)} tees <span>·</span> ${escapeHtml(round.player)}</p></div>
       <div class="history-metrics"><span><small>Differential</small><strong>${round.differential ?? scoreDifferential(round.total, round.courseRating, round.slope, round.pcc)}</strong></span><span><small>Rating / slope</small><strong>${round.courseRating} / ${round.slope}</strong></span></div>
-      <button class="icon-button danger" type="button" data-delete-round="${round.id}" aria-label="Delete ${escapeHtml(round.course)} round">Delete</button>
+      <div class="history-actions"><button class="button secondary history-export" type="button" data-export-round="${round.id}">Download PNG</button><button class="icon-button danger" type="button" data-delete-round="${round.id}" aria-label="Delete ${escapeHtml(round.course)} round">Delete</button></div>
     </article>
   `).join("");
 }
@@ -525,6 +526,14 @@ async function handleCourseAction(event) {
 }
 
 async function handleRoundAction(event) {
+  const exportButton=event.target.closest('[data-export-round]');
+  if(exportButton){
+    const round=state.rounds.find(item=>item.id===exportButton.dataset.exportRound);if(!round)return;
+    exportButton.disabled=true;const original=exportButton.textContent;exportButton.textContent='Preparing…';
+    try{await downloadScorecardPng({course:round.course,date:round.date,tee:round.tee,holeCount:round.holeCount,par:round.par,participants:[{id:currentUser.id,name:round.player,holes:round.holes}]})}
+    catch(error){console.error(error);alert(error.message||'That scorecard image could not be created.')}finally{exportButton.disabled=false;exportButton.textContent=original}
+    return;
+  }
   const button = event.target.closest("[data-delete-round]");
   if (!button) return;
   const round = state.rounds.find((item) => item.id === button.dataset.deleteRound);
