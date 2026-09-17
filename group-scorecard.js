@@ -1,7 +1,7 @@
 import { renderIdentityAvatar } from '/shared/identity.js?v=3';
 import { personLabel,socialError } from '/shared/social.js?v=4';
 import { loadGroupScorecard,savePlayerScorecard,completeGroupRound } from './group-scorecards.js';
-import { openScorecardExportPicker } from './scorecard-export.js?v=3';
+import { openScorecardExportPicker } from './scorecard-export-v3.js?v=1';
 
 const client=window.AppAuth?.client;
 const root=document.querySelector('[data-group-scorecard]');

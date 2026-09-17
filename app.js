@@ -6,7 +6,7 @@ import {
   sumHoles
 } from "./calculations.js";
 import { normalizeHoleCount, teeSnapshotForLength } from './round-lengths.js';
-import { openScorecardExportPicker } from './scorecard-export.js?v=3';
+import { openScorecardExportPicker } from './scorecard-export-v3.js?v=1';
 import { mountEcosystemProfileMenu } from "/shared/identity.js?v=3";
 
 const STORAGE_KEY = "fairway-log-v2";
