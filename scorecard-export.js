@@ -37,8 +37,20 @@ export function playerCountLayout(count){
   const players=Math.max(1,Number(count)||1),mode=players===1?'poster':players===2?'head-to-head':players===3?'three-player':'compact';
   const rowHeight=players===1?92:players===2?76:players===3?62:Math.max(25,Math.min(52,280/players));
   const highlightHeight=players===1?168:players===2?156:players===3?148:142;
-  const tableY=290,tableBottom=tableY+46+(rowHeight*players),highlightsY=tableBottom+22,footerY=highlightsY+highlightHeight+34,panelBottom=Math.min(1032,footerY+31);
-  return {mode,rowHeight,highlightHeight,tableY,tableBottom,highlightsY,footerY,panelBottom,panelHeight:panelBottom-42};
+  const tableY=290,parRowHeight=34,tableBottom=tableY+46+parRowHeight+(rowHeight*players),highlightsY=tableBottom+22,footerY=highlightsY+highlightHeight+34,panelBottom=Math.min(1032,footerY+31);
+  return {mode,rowHeight,parRowHeight,highlightHeight,tableY,tableBottom,highlightsY,footerY,panelBottom,panelHeight:panelBottom-42};
+}
+
+export function scorecardColumns(holeCount,width,nameWidth,totalWidth){
+  const holes=Number(holeCount)===9?9:18,summaryCount=holes===18?4:3,holeWidth=(width-nameWidth-totalWidth)/holes,summaryWidth=totalWidth/summaryCount,cells=[];
+  let left=0;
+  const addHole=hole=>{cells.push({kind:'hole',hole,label:String(hole),left,width:holeWidth});left+=holeWidth};
+  const addSummary=(key,label)=>{cells.push({kind:'summary',key,label,left,width:summaryWidth});left+=summaryWidth};
+  for(let hole=1;hole<=9;hole++)addHole(hole);
+  if(holes===18){addSummary('front','F9');for(let hole=10;hole<=18;hole++)addHole(hole);addSummary('back','B9')}
+  else addSummary('front','9');
+  addSummary('total','TOTAL');addSummary('toPar','+/−');
+  return cells;
 }
 
 export function openScorecardExportPicker(input){
@@ -92,11 +104,20 @@ function drawCard(ctx,card){
 }
 
 function drawScoreTable(ctx,card,x,y,width,layout){
-  const rowHeight=layout.rowHeight,headerHeight=46,totalHeight=headerHeight+rowHeight*card.participants.length;roundRect(ctx,x,y,width,totalHeight,10,COLORS.panelSoft,COLORS.gold,1.4);
-  const nameWidth=card.holeCount===18?(layout.mode==='poster'?176:154):210,totalColumns=card.holeCount===18?4:3,totalWidth=card.holeCount===18?190:240,holeWidth=(width-nameWidth-totalWidth)/card.holeCount,totalLabels=card.holeCount===18?['F9','B9','TOTAL','+/−']:['9','TOTAL','+/−'],totalCellWidth=totalWidth/totalColumns;
-  ctx.textBaseline='middle';ctx.textAlign='center';label(ctx,'GOLFER',x+12,y+headerHeight/2,12,COLORS.goldSoft,700,'left');for(let hole=0;hole<card.holeCount;hole++)label(ctx,String(hole+1),x+nameWidth+holeWidth*(hole+.5),y+headerHeight/2,11,COLORS.goldSoft,700);totalLabels.forEach((text,index)=>label(ctx,text,x+nameWidth+holeWidth*card.holeCount+totalCellWidth*(index+.5),y+headerHeight/2,11,COLORS.goldSoft,700));line(ctx,x,y+headerHeight,x+width,y+headerHeight,COLORS.gold,1);
-  card.participants.forEach((person,row)=>{const top=y+headerHeight+rowHeight*row,center=top+rowHeight/2,nameSize=layout.mode==='poster'?20:layout.mode==='head-to-head'?18:16,scoreSize=layout.mode==='poster'?18:16;if(row)line(ctx,x,top,x+width,top,COLORS.line,.7);fit(ctx,person.name,x+12,center,nameSize,650,COLORS.cream,nameWidth-22,'left','Georgia');person.holes.forEach((score,hole)=>label(ctx,String(score),x+nameWidth+holeWidth*(hole+.5),center,scoreSize,COLORS.cream,600));const values=card.holeCount===18?[person.front,person.back,person.total,person.toPar]:[person.front,person.total,person.toPar];values.forEach((value,index)=>label(ctx,String(value),x+nameWidth+holeWidth*card.holeCount+totalCellWidth*(index+.5),center,index===values.length-2?scoreSize+2:scoreSize,index===values.length-1?COLORS.green:COLORS.cream,700))});
-  line(ctx,x+nameWidth,y,x+nameWidth,y+totalHeight,COLORS.gold,1);line(ctx,x+nameWidth+holeWidth*card.holeCount,y,x+nameWidth+holeWidth*card.holeCount,y+totalHeight,COLORS.gold,1);
+  const rowHeight=layout.rowHeight,headerHeight=46,parRowHeight=layout.parRowHeight,totalHeight=headerHeight+parRowHeight+rowHeight*card.participants.length;roundRect(ctx,x,y,width,totalHeight,10,COLORS.panelSoft,COLORS.gold,1.4);
+  const nameWidth=card.holeCount===18?(layout.mode==='poster'?176:154):210,totalWidth=card.holeCount===18?190:240,cells=scorecardColumns(card.holeCount,width,nameWidth,totalWidth),contentX=x+nameWidth;
+  ctx.textBaseline='middle';ctx.textAlign='center';label(ctx,'GOLFER',x+12,y+headerHeight/2,12,COLORS.goldSoft,700,'left');cells.forEach(cell=>label(ctx,cell.label,contentX+cell.left+cell.width/2,y+headerHeight/2,11,COLORS.goldSoft,700));line(ctx,x,y+headerHeight,x+width,y+headerHeight,COLORS.gold,1);
+  drawNineSeparators(ctx,cells,contentX,y,totalHeight,card.holeCount);
+  const parTop=y+headerHeight,parCenter=parTop+parRowHeight/2;label(ctx,'PAR',x+12,parCenter,11,COLORS.goldSoft,700,'left');cells.forEach(cell=>label(ctx,parCellValue(card,cell),contentX+cell.left+cell.width/2,parCenter,11,cell.key==='total'?COLORS.cream:COLORS.muted,700));line(ctx,x,parTop+parRowHeight,x+width,parTop+parRowHeight,COLORS.line,.9);
+  card.participants.forEach((person,row)=>{const top=parTop+parRowHeight+rowHeight*row,center=top+rowHeight/2,nameSize=layout.mode==='poster'?20:layout.mode==='head-to-head'?18:16,scoreSize=layout.mode==='poster'?18:16;if(row)line(ctx,x,top,x+width,top,COLORS.line,.7);fit(ctx,person.name,x+12,center,nameSize,650,COLORS.cream,nameWidth-22,'left','Georgia');cells.forEach(cell=>{const value=playerCellValue(person,cell),isTotal=cell.key==='total',isToPar=cell.key==='toPar';label(ctx,String(value),contentX+cell.left+cell.width/2,center,isTotal?scoreSize+2:scoreSize,isToPar?COLORS.green:COLORS.cream,700)})});
+  line(ctx,contentX,y,contentX,y+totalHeight,COLORS.gold,1);
+}
+
+function playerCellValue(person,cell){if(cell.kind==='hole')return person.holes[cell.hole-1];return person[cell.key]}
+function parCellValue(card,cell){if(cell.kind==='hole')return '—';if(cell.key==='total'||(card.holeCount===9&&cell.key==='front'))return String(card.par||'—');return '—'}
+function drawNineSeparators(ctx,cells,contentX,y,totalHeight,holeCount){
+  if(holeCount!==18)return;
+  for(const cell of cells){if(cell.kind!=='summary'||!['front','back'].includes(cell.key))continue;ctx.fillStyle='rgba(216,181,103,.08)';ctx.fillRect(contentX+cell.left,y,cell.width,totalHeight);line(ctx,contentX+cell.left,y,contentX+cell.left,y+totalHeight,COLORS.gold,1.4);line(ctx,contentX+cell.left+cell.width,y,contentX+cell.left+cell.width,y+totalHeight,COLORS.gold,1.4)}
 }
 
 function drawHighlights(ctx,items,x,y,width,layout){const count=items.length,boxHeight=layout.highlightHeight,valueSize=layout.mode==='poster'?28:layout.mode==='head-to-head'?24:21;roundRect(ctx,x,y,width,boxHeight,10,'rgba(3,25,18,.9)',COLORS.line,1);items.forEach(([title,value],index)=>{const left=x+width/count*index,center=left+width/count/2;if(index)line(ctx,left,y+18,left,y+boxHeight-18,COLORS.line,1);label(ctx,title.toUpperCase(),center,y+boxHeight*.3,11,COLORS.gold,700);fit(ctx,value,center,y+boxHeight*.62,valueSize,600,COLORS.cream,width/count-26,'center','Georgia')})}

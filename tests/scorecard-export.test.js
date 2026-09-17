@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile,stat } from 'node:fs/promises';
-import { normalizeScorecard,playerCountLayout,SCORECARD_BACKDROPS,scorecardFilename,scorecardHighlights } from '../scorecard-export.js';
+import { normalizeScorecard,playerCountLayout,scorecardColumns,SCORECARD_BACKDROPS,scorecardFilename,scorecardHighlights } from '../scorecard-export.js';
 
 const nine={course:'Nine & Dine',date:'2026-09-10',tee:'Gold',holeCount:9,par:36,participants:[{name:'Alex',holes:[4,5,3,4,4,5,3,4,4]}]};
 const eighteen={course:'Seaside Dunes',date:'2026-09-10',tee:'Blue',holeCount:18,par:72,participants:[{name:'Alex',holes:[4,5,3,4,4,4,3,5,4,4,4,4,3,4,5,3,5,4]}]};
@@ -48,14 +48,25 @@ test('offers five distinct premium backdrop assets',()=>{
   assert.equal(new Set(SCORECARD_BACKDROPS.map(item=>item.url)).size,5);
 });
 
+test('places the front-nine total between the two 18-hole groups',()=>{
+  const labels=scorecardColumns(18,924,154,190).map(cell=>cell.label);
+  assert.deepEqual(labels,['1','2','3','4','5','6','7','8','9','F9','10','11','12','13','14','15','16','17','18','B9','TOTAL','+/−']);
+});
+
+test('keeps the 9-hole export free of back-nine structure',()=>{
+  const labels=scorecardColumns(9,924,210,240).map(cell=>cell.label);
+  assert.deepEqual(labels,['1','2','3','4','5','6','7','8','9','9','TOTAL','+/−']);
+  assert.equal(labels.includes('F9'),false);assert.equal(labels.includes('B9'),false);
+});
+
 test('completed individual and shared views expose export without new data access',async()=>{
   const root=new URL('../',import.meta.url);const [app,group,index,renderer,styles,groupStyles,exportStyles,...assets]=await Promise.all([
     readFile(new URL('app.js',root),'utf8'),readFile(new URL('group-scorecard.js',root),'utf8'),readFile(new URL('index.html',root),'utf8'),readFile(new URL('scorecard-export.js',root),'utf8'),readFile(new URL('style.css',root),'utf8'),readFile(new URL('group-scorecard.css',root),'utf8'),readFile(new URL('scorecard-export.css',root),'utf8'),...SCORECARD_BACKDROPS.map(item=>stat(new URL(item.url)))
   ]);
-  assert.match(app,/data-export-round/);assert.match(app,/openScorecardExportPicker/);assert.match(app,/scorecard-export\.js\?v=2/);
+  assert.match(app,/data-export-round/);assert.match(app,/openScorecardExportPicker/);assert.match(app,/scorecard-export\.js\?v=3/);
   assert.match(group,/round\.status!==\'completed\'/);assert.match(group,/data-export-scorecard/);
-  assert.match(group,/scorecard-export\.js\?v=2/);
-  assert.match(index,/data-export-scorecard hidden/);assert.match(index,/scorecard-export\.css\?v=1/);assert.match(index,/app\.js\?v=19/);assert.match(index,/group-scorecard\.js\?v=7/);
+  assert.match(group,/scorecard-export\.js\?v=3/);
+  assert.match(index,/data-export-scorecard hidden/);assert.match(index,/scorecard-export\.css\?v=1/);assert.match(index,/app\.js\?v=20/);assert.match(index,/group-scorecard\.js\?v=8/);
   assert.match(styles,/\.history-export\{[^}]*min-height:42px/);assert.match(styles,/@media\(max-width:480px\)[^\n]*\.history-export\{flex:1\}/);
   assert.match(groupStyles,/\.scorecard-heading-actions \.button\{min-height:44px\}/);assert.match(groupStyles,/grid-template-columns:1fr 1fr/);
   assert.match(exportStyles,/\.scorecard-backdrop-picker/);assert.match(exportStyles,/@media\(max-width:430px\)/);
