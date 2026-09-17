@@ -52,9 +52,10 @@ test('completed individual and shared views expose export without new data acces
   const root=new URL('../',import.meta.url);const [app,group,index,renderer,styles,groupStyles,exportStyles,...assets]=await Promise.all([
     readFile(new URL('app.js',root),'utf8'),readFile(new URL('group-scorecard.js',root),'utf8'),readFile(new URL('index.html',root),'utf8'),readFile(new URL('scorecard-export.js',root),'utf8'),readFile(new URL('style.css',root),'utf8'),readFile(new URL('group-scorecard.css',root),'utf8'),readFile(new URL('scorecard-export.css',root),'utf8'),...SCORECARD_BACKDROPS.map(item=>stat(new URL(item.url)))
   ]);
-  assert.match(app,/data-export-round/);assert.match(app,/openScorecardExportPicker/);
+  assert.match(app,/data-export-round/);assert.match(app,/openScorecardExportPicker/);assert.match(app,/scorecard-export\.js\?v=2/);
   assert.match(group,/round\.status!==\'completed\'/);assert.match(group,/data-export-scorecard/);
-  assert.match(index,/data-export-scorecard hidden/);assert.match(index,/scorecard-export\.css\?v=1/);assert.match(index,/app\.js\?v=18/);assert.match(index,/group-scorecard\.js\?v=6/);
+  assert.match(group,/scorecard-export\.js\?v=2/);
+  assert.match(index,/data-export-scorecard hidden/);assert.match(index,/scorecard-export\.css\?v=1/);assert.match(index,/app\.js\?v=19/);assert.match(index,/group-scorecard\.js\?v=7/);
   assert.match(styles,/\.history-export\{[^}]*min-height:42px/);assert.match(styles,/@media\(max-width:480px\)[^\n]*\.history-export\{flex:1\}/);
   assert.match(groupStyles,/\.scorecard-heading-actions \.button\{min-height:44px\}/);assert.match(groupStyles,/grid-template-columns:1fr 1fr/);
   assert.match(exportStyles,/\.scorecard-backdrop-picker/);assert.match(exportStyles,/@media\(max-width:430px\)/);
