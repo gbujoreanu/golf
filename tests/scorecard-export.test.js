@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile,stat } from 'node:fs/promises';
-import { normalizeScorecard,scorecardFilename,scorecardHighlights } from '../scorecard-export.js';
+import { normalizeScorecard,playerCountLayout,SCORECARD_BACKDROPS,scorecardFilename,scorecardHighlights } from '../scorecard-export.js';
 
 const nine={course:'Nine & Dine',date:'2026-09-10',tee:'Gold',holeCount:9,par:36,participants:[{name:'Alex',holes:[4,5,3,4,4,5,3,4,4]}]};
 const eighteen={course:'Seaside Dunes',date:'2026-09-10',tee:'Blue',holeCount:18,par:72,participants:[{name:'Alex',holes:[4,5,3,4,4,4,3,5,4,4,4,4,3,4,5,3,5,4]}]};
@@ -34,14 +34,29 @@ test('creates a safe stable PNG filename',()=>{
   assert.equal(scorecardFilename({...nine,course:'Pine Ridge / North'}),'fairway-pine-ridge-north-2026-09-10.png');
 });
 
+test('uses intentional layouts for one through four golfers',()=>{
+  const layouts=[1,2,3,4].map(playerCountLayout);
+  assert.deepEqual(layouts.map(layout=>layout.mode),['poster','head-to-head','three-player','compact']);
+  assert.ok(layouts[0].rowHeight>layouts[1].rowHeight&&layouts[1].rowHeight>layouts[2].rowHeight&&layouts[2].rowHeight>layouts[3].rowHeight);
+  assert.ok(layouts[0].panelHeight<layouts[1].panelHeight&&layouts[1].panelHeight<layouts[2].panelHeight&&layouts[2].panelHeight<layouts[3].panelHeight);
+  layouts.forEach(layout=>assert.equal(layout.highlightsY-layout.tableBottom,22));
+});
+
+test('offers five distinct premium backdrop assets',()=>{
+  assert.equal(SCORECARD_BACKDROPS.length,5);
+  assert.equal(new Set(SCORECARD_BACKDROPS.map(item=>item.id)).size,5);
+  assert.equal(new Set(SCORECARD_BACKDROPS.map(item=>item.url)).size,5);
+});
+
 test('completed individual and shared views expose export without new data access',async()=>{
-  const root=new URL('../',import.meta.url);const [app,group,index,renderer,styles,groupStyles,asset]=await Promise.all([
-    readFile(new URL('app.js',root),'utf8'),readFile(new URL('group-scorecard.js',root),'utf8'),readFile(new URL('index.html',root),'utf8'),readFile(new URL('scorecard-export.js',root),'utf8'),readFile(new URL('style.css',root),'utf8'),readFile(new URL('group-scorecard.css',root),'utf8'),stat(new URL('assets/fairway-share-bg.png',root))
+  const root=new URL('../',import.meta.url);const [app,group,index,renderer,styles,groupStyles,exportStyles,...assets]=await Promise.all([
+    readFile(new URL('app.js',root),'utf8'),readFile(new URL('group-scorecard.js',root),'utf8'),readFile(new URL('index.html',root),'utf8'),readFile(new URL('scorecard-export.js',root),'utf8'),readFile(new URL('style.css',root),'utf8'),readFile(new URL('group-scorecard.css',root),'utf8'),readFile(new URL('scorecard-export.css',root),'utf8'),...SCORECARD_BACKDROPS.map(item=>stat(new URL(item.url)))
   ]);
-  assert.match(app,/data-export-round/);assert.match(app,/downloadScorecardPng/);
+  assert.match(app,/data-export-round/);assert.match(app,/openScorecardExportPicker/);
   assert.match(group,/round\.status!==\'completed\'/);assert.match(group,/data-export-scorecard/);
-  assert.match(index,/data-export-scorecard hidden/);assert.match(index,/app\.js\?v=17/);assert.match(index,/group-scorecard\.js\?v=5/);
+  assert.match(index,/data-export-scorecard hidden/);assert.match(index,/scorecard-export\.css\?v=1/);assert.match(index,/app\.js\?v=18/);assert.match(index,/group-scorecard\.js\?v=6/);
   assert.match(styles,/\.history-export\{[^}]*min-height:42px/);assert.match(styles,/@media\(max-width:480px\)[^\n]*\.history-export\{flex:1\}/);
   assert.match(groupStyles,/\.scorecard-heading-actions \.button\{min-height:44px\}/);assert.match(groupStyles,/grid-template-columns:1fr 1fr/);
-  assert.doesNotMatch(renderer,/supabase|client\.(?:from|rpc)\(/i);assert.ok(asset.size>100000);
+  assert.match(exportStyles,/\.scorecard-backdrop-picker/);assert.match(exportStyles,/@media\(max-width:430px\)/);
+  assert.doesNotMatch(renderer,/supabase|client\.(?:from|rpc)\(/i);assets.forEach(asset=>assert.ok(asset.size>100000));
 });

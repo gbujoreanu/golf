@@ -6,7 +6,7 @@ import {
   sumHoles
 } from "./calculations.js";
 import { normalizeHoleCount, teeSnapshotForLength } from './round-lengths.js';
-import { downloadScorecardPng } from './scorecard-export.js';
+import { openScorecardExportPicker } from './scorecard-export.js';
 import { mountEcosystemProfileMenu } from "/shared/identity.js?v=3";
 
 const STORAGE_KEY = "fairway-log-v2";
@@ -529,9 +529,8 @@ async function handleRoundAction(event) {
   const exportButton=event.target.closest('[data-export-round]');
   if(exportButton){
     const round=state.rounds.find(item=>item.id===exportButton.dataset.exportRound);if(!round)return;
-    exportButton.disabled=true;const original=exportButton.textContent;exportButton.textContent='Preparing…';
-    try{await downloadScorecardPng({course:round.course,date:round.date,tee:round.tee,holeCount:round.holeCount,par:round.par,participants:[{id:currentUser.id,name:round.player,holes:round.holes}]})}
-    catch(error){console.error(error);alert(error.message||'That scorecard image could not be created.')}finally{exportButton.disabled=false;exportButton.textContent=original}
+    try{openScorecardExportPicker({course:round.course,date:round.date,tee:round.tee,holeCount:round.holeCount,par:round.par,participants:[{id:currentUser.id,name:round.player,holes:round.holes}]})}
+    catch(error){console.error(error);alert(error.message||'That scorecard image could not be created.')}
     return;
   }
   const button = event.target.closest("[data-delete-round]");
