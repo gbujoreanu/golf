@@ -7,6 +7,8 @@ import {
 } from "./calculations.js";
 import { normalizeHoleCount, teeSnapshotForLength } from './round-lengths.js';
 import { openScorecardExportPicker } from './scorecard-export-v3.js?v=1';
+import { mountCoursePicker } from './course-picker.js';
+import { ensureSavedApiCourse } from './course-selection.js';
 import { mountEcosystemProfileMenu } from "/shared/identity.js?v=3";
 
 const STORAGE_KEY = "fairway-log-v2";
@@ -22,6 +24,7 @@ let currentUser = null;
 let activeView = "dashboard";
 let settings = loadSettings();
 let returnToRoundAfterCourse = false;
+let roundCoursePicker = null;
 
 const elements = {
   navButtons: [...document.querySelectorAll("[data-view]")],
@@ -101,6 +104,7 @@ async function initialize() {
     elements.migrateButton.classList.toggle('hidden', !legacyState);
     document.body.classList.remove('auth-pending');
     renderAll();
+    mountRoundCoursePicker();
     applyRoute();
     if (!hasSeenWelcome()) setTimeout(openWelcome, 250);
   } catch (loadError) {
@@ -126,6 +130,13 @@ function bindEvents() {
     } catch (error) {
       console.error(error);
     }
+  });
+  window.addEventListener('fairway:course-saved', event => {
+    const course=event.detail;
+    if(!course?.id)return;
+    const index=state.courses.findIndex(item=>item.id===course.id);
+    if(index>=0)state.courses[index]=course;else state.courses.push(course);
+    renderAll();
   });
   elements.navButtons.forEach((button) => button.addEventListener("click", () => showView(button.dataset.view)));
   document.addEventListener("click", (event) => {
@@ -183,7 +194,7 @@ function bindEvents() {
 function hasSeenWelcome(){try{return localStorage.getItem(ONBOARDING_KEY)==='seen'}catch(error){return false}}
 function openWelcome(){if(!elements.welcomeModal.open)elements.welcomeModal.showModal()}
 function dismissWelcome(){try{localStorage.setItem(ONBOARDING_KEY,'seen')}catch(error){}elements.welcomeModal.close()}
-function startWelcome(){dismissWelcome();showView(state.courses.length?'new-round':'courses');if(!state.courses.length)setTimeout(()=>elements.courseName.focus(),0)}
+function startWelcome(){dismissWelcome();showView('new-round');setTimeout(()=>roundCoursePicker?.focus(),0)}
 
 function loadSettings(){
   try{const saved=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');return{theme:FAIRWAY_THEMES.includes(saved.theme)?saved.theme:'classic',density:saved.density==='compact'?'compact':'comfortable'}}
@@ -244,7 +255,7 @@ function showView(viewName,updateRoute=true) {
   activeView = viewName;
   elements.views.forEach((view) => view.classList.toggle("active", view.dataset.viewPanel === viewName));
   elements.navButtons.forEach((button) => button.classList.toggle("active", button.dataset.view === viewName));
-  if (viewName === "new-round") (state.courses.length ? elements.roundCourse : document.querySelector('[data-add-course]'))?.focus({ preventScroll: true });
+  if (viewName === "new-round") (state.courses.length ? elements.roundCourse : document.querySelector('[data-course-picker="round"] [data-course-query]'))?.focus({ preventScroll: true });
   if(updateRoute&&viewName!=='scorecard'&&location.hash!==`#${viewName}`)history.replaceState(null,'',`#${viewName}`);
   window.scrollTo({ top: 0, behavior: "smooth" });
   window.dispatchEvent(new CustomEvent('fairway:view',{detail:viewName}));
@@ -259,6 +270,24 @@ function renderAll() {
   renderRoundHistory();
   renderCourseLibrary();
   renderRoundReadiness();
+}
+
+function mountRoundCoursePicker(){
+  if(roundCoursePicker)return;
+  roundCoursePicker=mountCoursePicker({
+    root:document.querySelector('[data-course-picker="round"]'),
+    async onChoose(selection){
+      const saved=await ensureSavedApiCourse(cloudClient,currentUser.id,state.courses,selection);
+      window.dispatchEvent(new CustomEvent('fairway:course-saved',{detail:saved}));
+      elements.roundCourse.value=saved.course;
+      renderTeeOptions();
+      elements.roundTee.value=saved.id;
+      renderSelectedCourseContext();
+      updateRoundSummary();
+      document.querySelector('.saved-course-choice')?.setAttribute('open','');
+    },
+    onManual(){returnToRoundAfterCourse=true;showView('courses');setTimeout(()=>elements.courseName.focus(),0)}
+  });
 }
 
 function getPlayers() {
@@ -557,10 +586,8 @@ function showMessage(element, message, isError = false) {
 }
 
 function renderRoundReadiness(){
-  const hasCourses=state.courses.length>0;
-  elements.roundCourseGate.hidden=hasCourses;
-  elements.roundForm.hidden=!hasCourses;
-  if(!hasCourses)elements.roundCourseGate.innerHTML=`<svg viewBox="0 0 48 48" aria-hidden="true"><use href="#icon-course"/></svg><p class="eyebrow">Course required</p><h2>Add a course before recording a round.</h2><p>Fairway uses its par, Course Rating, and Slope Rating to calculate your score and differential correctly.</p><button class="button primary" type="button" data-add-course>Add your first course</button>`;
+  elements.roundCourseGate.hidden=true;
+  elements.roundForm.hidden=false;
   updateRoundSummary();
 }
 

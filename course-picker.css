@@ -1,0 +1,22 @@
+.course-picker{display:grid;gap:12px;padding:18px 0;border-block:1px solid var(--border-default)}
+.course-picker.compact{padding:0 0 18px;border-top:0}
+.course-picker[aria-busy="true"]{cursor:progress}
+.course-picker-status{min-height:1.25em;margin:0;color:var(--text-muted);font-size:.82rem}
+.course-picker-status.error{color:var(--danger)}
+.course-results{display:grid;gap:1px;max-height:240px;overflow:auto;border:1px solid var(--border-default);background:var(--border-default)}
+.course-results:empty{display:none}
+.course-result{display:grid;gap:3px;width:100%;padding:13px 14px;border:0;background:var(--surface-panel);color:var(--text-primary);text-align:left;cursor:pointer}
+.course-result:hover,.course-result.selected{background:var(--control-selected-bg);color:var(--control-selected-text)}
+.course-result:focus-visible{position:relative;z-index:1;outline:3px solid var(--focus-ring);outline-offset:-3px}
+.course-result strong{font:700 .95rem/1.2 var(--font-sans,inherit)}
+.course-result span{color:var(--text-muted);font-size:.78rem}
+.course-result:hover span,.course-result.selected span{color:inherit;opacity:.78}
+.course-tee-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:12px;padding:14px;background:var(--surface-alt);border-left:3px solid var(--accent)}
+.course-tee-panel[hidden]{display:none}
+.course-tee-panel .button{min-height:44px;white-space:nowrap}
+.course-picker-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;color:var(--text-muted);font-size:.72rem}
+.course-picker-foot a{color:inherit}
+.saved-course-choice{margin-top:12px;border-bottom:1px solid var(--border-default)}
+.saved-course-choice summary{padding:12px 0;color:var(--text-secondary);font-weight:700;cursor:pointer}
+.saved-course-choice .course-choice-grid{padding-bottom:14px}
+@media(max-width:560px){.course-tee-panel{grid-template-columns:1fr}.course-tee-panel .button{width:100%}.course-picker-foot{align-items:flex-start;flex-direction:column;gap:8px}.course-results{max-height:210px}}

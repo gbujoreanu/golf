@@ -4,12 +4,15 @@ import {
   loadPlannedRoundData,createPlannedRound,updatePlannedRound,invitePlayers,
   respondToRound,removePlayer,leaveRound,cancelRound
 } from './planned-rounds.js';
+import { mountCoursePicker } from './course-picker.js';
+import { ensureSavedApiCourse } from './course-selection.js';
 
 const client=window.AppAuth?.client;
 const root=document.querySelector('[data-planned-rounds]');
 const dialog=document.getElementById('planRoundDialog');
 const form=document.getElementById('planRoundForm');
 let user=null,rounds=[],courses=[],friends=[],editingId=null,prefillFriendId=null;
+let planCoursePicker=null;
 
 if(client&&root){
   root.addEventListener('click',handleAction);
@@ -20,6 +23,7 @@ if(client&&root){
   dialog.addEventListener('close',resetForm);
   window.addEventListener('fairway:view',event=>{if(event.detail==='upcoming'&&user)load();});
   window.addEventListener('fairway:plan-round',event=>{prefillFriendId=event.detail?.userId||null;location.hash='upcoming';openPlan();});
+  window.addEventListener('fairway:course-saved',event=>{const course=event.detail;if(!course?.id)return;const index=courses.findIndex(item=>item.id===course.id);if(index>=0)courses[index]=course;else courses.push(course);fillCourses(course.id)});
   client.auth.onAuthStateChange((_event,session)=>setUser(session?.user||null));
   client.auth.getSession().then(({data})=>setUser(data.session?.user||null));
 }
@@ -43,8 +47,8 @@ function render(){
   root.querySelector('[data-invite-count]').textContent=countLabel(invites.length,'pending');
   root.querySelector('[data-upcoming-count]').textContent=countLabel(confirmed.length,'round');
   root.querySelector('[data-completed-count]').textContent=countLabel(completed.length,'round');
-  root.querySelector('[data-plan-round]').disabled=!courses.length;
-  root.querySelector('[data-no-courses]').hidden=Boolean(courses.length);
+  root.querySelector('[data-plan-round]').disabled=false;
+  root.querySelector('[data-no-courses]').hidden=true;
   const linkedId=location.hash.match(/^#upcoming\/([a-f0-9-]{36})$/i)?.[1];
   if(linkedId){const linked=[...root.querySelectorAll('[data-round-id]')].find(row=>row.dataset.roundId===linkedId);if(linked){linked.tabIndex=-1;linked.focus({preventScroll:true});linked.scrollIntoView({block:'center'});}else setMessage('This round is no longer available to you.');}
 }
@@ -125,13 +129,13 @@ async function handleAction(event){
 }
 
 async function openPlan(round=null,inviteOnly=false){
-  if(!courses.length){location.hash='courses';return}
   editingId=round?.id||null;
   form.dataset.inviteOnly=String(inviteOnly);
   document.getElementById('planDialogTitle').textContent=round?(inviteOnly?'Invite more golfers':'Edit tee time'):'Plan a round';
   document.getElementById('planCourse').disabled=inviteOnly;document.getElementById('planDate').disabled=inviteOnly;document.getElementById('planTime').disabled=inviteOnly;document.getElementById('planLength').disabled=inviteOnly;document.getElementById('planNotes').disabled=inviteOnly;
   document.getElementById('savePlan').textContent=inviteOnly?'Send invitations':round?'Save changes':'Plan round';
   fillCourses(round?.course_id);
+  mountPlanCoursePicker();planCoursePicker?.setDisabled(inviteOnly);
   const at=round?new Date(round.scheduled_at):new Date(Date.now()+86400000);at.setMinutes(Math.ceil(at.getMinutes()/15)*15,0,0);
   document.getElementById('planDate').value=localDate(at);document.getElementById('planTime').value=at.toTimeString().slice(0,5);document.getElementById('planNotes').value=round?.notes||'';
   document.getElementById('planLength').value=String(round?.hole_count||18);
@@ -139,7 +143,15 @@ async function openPlan(round=null,inviteOnly=false){
   if(!dialog.open)dialog.showModal();setTimeout(()=>dialog.querySelector('select:not(:disabled),input:not(:disabled)')?.focus(),0);
 }
 
-function fillCourses(selected){const select=document.getElementById('planCourse');select.replaceChildren();courses.forEach(course=>{const option=document.createElement('option');option.value=course.id;option.textContent=`${course.course} · ${course.tee} tees`;option.selected=course.id===selected;select.append(option)})}
+function mountPlanCoursePicker(){
+  if(planCoursePicker)return;
+  planCoursePicker=mountCoursePicker({root:document.querySelector('[data-course-picker="planned"]'),async onChoose(selection){
+    const saved=await ensureSavedApiCourse(client,user.id,courses,selection);
+    window.dispatchEvent(new CustomEvent('fairway:course-saved',{detail:saved}));
+    fillCourses(saved.id);
+  },onManual(){dialog.close();location.hash='courses';setTimeout(()=>document.getElementById('courseName')?.focus(),0)}});
+}
+function fillCourses(selected){const select=document.getElementById('planCourse');select.replaceChildren();if(!courses.length){const empty=new Option('Search for a course above','');empty.disabled=true;empty.selected=true;select.add(empty);return}courses.slice().sort((a,b)=>`${a.course} ${a.tee}`.localeCompare(`${b.course} ${b.tee}`)).forEach(course=>{const option=document.createElement('option');option.value=course.id;option.textContent=`${course.course} · ${course.tee} tees`;option.selected=course.id===selected;select.add(option)})}
 function renderFriendChoices(round){
   const invited=new Set((round?.participants||[]).map(person=>person.id));const wrap=document.getElementById('planFriends');wrap.replaceChildren();
   const eligible=friends.filter(friend=>!invited.has(friend.id));
