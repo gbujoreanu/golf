@@ -66,7 +66,7 @@ test('completed individual and shared views expose export without new data acces
   assert.match(app,/data-export-round/);assert.match(app,/openScorecardExportPicker/);assert.match(app,/scorecard-export-v3\.js\?v=1/);
   assert.match(group,/round\.status!==\'completed\'/);assert.match(group,/data-export-scorecard/);
   assert.match(group,/scorecard-export-v3\.js\?v=1/);
-  assert.match(index,/data-export-scorecard hidden/);assert.match(index,/scorecard-export\.css\?v=1/);assert.match(index,/app\.js\?v=22/);assert.match(index,/group-scorecard\.js\?v=9/);
+  assert.match(index,/data-export-scorecard hidden/);assert.match(index,/scorecard-export\.css\?v=1/);assert.match(index,/app\.js\?v=23/);assert.match(index,/group-scorecard\.js\?v=9/);
   assert.match(styles,/\.history-export\{[^}]*min-height:42px/);assert.match(styles,/@media\(max-width:480px\)[^\n]*\.history-export\{flex:1\}/);
   assert.match(groupStyles,/\.scorecard-heading-actions \.button\{min-height:44px\}/);assert.match(groupStyles,/grid-template-columns:1fr 1fr/);
   assert.match(exportStyles,/\.scorecard-backdrop-picker/);assert.match(exportStyles,/@media\(max-width:430px\)/);

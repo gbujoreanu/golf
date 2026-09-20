@@ -1,3 +1,4 @@
+import { normalizeHoleData } from './course-snapshot.js';
 const DEFAULT_BASE_URL = 'https://api.opengolfapi.org/v1';
 
 export class OpenGolfApiError extends Error {
@@ -38,6 +39,7 @@ export class OpenGolfApiProvider {
       this.#request(`${this.baseUrl}/courses/${encodeURIComponent(id)}/tees`, signal)
     ]);
     const course = normalizeCourseDetail(detailPayload, id);
+    course.retrievedAt = new Date().toISOString();
     const tees = normalizeTees(teePayload, course);
     if (!tees.length) {
       throw new OpenGolfApiError('No reliable tee ratings were available. Add this course manually instead.', 'incomplete_tees');
@@ -89,7 +91,8 @@ export function normalizeCourseDetail(payload, fallbackId = '') {
     hole: validInteger(item?.hole ?? item?.number, 1, 36),
     par: validInteger(item?.par, 2, 8)
   })).filter(item => item.hole && item.par);
-  return { ...summary, holes, par: validNumber(row.par, 27, 90) ?? summary.par, scorecard };
+  return { ...summary, holes, par: validNumber(row.par, 27, 90) ?? summary.par, scorecard,
+    sourceHoles: normalizeHoleData(firstArray(row.scorecard, row.hole_data, row.holes_detail)).filter(hole => !holes || hole.number <= holes) };
 }
 
 export function normalizeTees(payload, course) {
@@ -103,11 +106,13 @@ export function normalizeTees(payload, course) {
     let rating = validNumber(row?.course_rating ?? row?.rating, 20, 90);
     const slope = validNumber(row?.slope ?? row?.slope_rating, 55, 155);
     if (!name || !par || !rating || !slope) return null;
+    const sourcePar = par, sourceRating = rating;
     if (isNineHoleCourse || (par < 50 && rating < 50)) {
       par *= 2;
       rating *= 2;
     }
-    const key = cleanText(row?.tee_key ?? row?.id, 100) || `${slug(name)}-${slug(gender || 'all')}-${index}`;
+    const sourceId = cleanText(row?.tee_key ?? row?.id, 100) || null;
+    const key = sourceId || `${slug(name)}-${slug(gender || 'all')}-${index}`;
     const unique = `${key}|${rating}|${slope}`;
     if (seen.has(unique)) return null;
     seen.add(unique);
@@ -119,6 +124,8 @@ export function normalizeTees(payload, course) {
       par: Number(par.toFixed(1)),
       rating: Number(rating.toFixed(1)),
       slope: Number(slope),
+      sourceId, sourcePar, sourceRating,
+      sourceHoles: normalizeHoleData(firstArray(row?.holes, row?.scorecard, row?.hole_data, row?.holes_detail)).filter(hole => !course?.holes || hole.number <= course.holes),
       yardage: validInteger(row?.yardage ?? row?.yards, 500, 10000)
     };
   }).filter(Boolean);
@@ -149,11 +156,13 @@ function cleanText(value, maxLength) {
 }
 
 function validNumber(value, min, max) {
+  if (value == null || value === '' || typeof value === 'boolean' || typeof value === 'object') return null;
   const number = Number(value);
   return Number.isFinite(number) && number >= min && number <= max ? number : null;
 }
 
 function validInteger(value, min, max) {
+  if (value == null || value === '' || typeof value === 'boolean' || typeof value === 'object') return null;
   const number = Number(value);
   return Number.isInteger(number) && number >= min && number <= max ? number : null;
 }
@@ -161,4 +170,3 @@ function validInteger(value, min, max) {
 function slug(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
-

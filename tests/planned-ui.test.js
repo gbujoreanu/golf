@@ -25,5 +25,5 @@ test("Upcoming rounds use a readable tee-sheet hierarchy", async () => {
   assert.match(html, /data-invite-count/);
   assert.match(html, /data-upcoming-count/);
   assert.match(html, /planned\.css\?v=3/);
-  assert.match(html, /planned\.js\?v=6/);
+  assert.match(html, /planned\.js\?v=7/);
 });

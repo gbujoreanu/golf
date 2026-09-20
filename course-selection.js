@@ -1,3 +1,5 @@
+import { selectedCourseSnapshot } from './course-snapshot.js';
+
 export function apiSelectionToSavedCourse(selection) {
   const course = selection?.course;
   const tee = selection?.tee;
@@ -8,19 +10,15 @@ export function apiSelectionToSavedCourse(selection) {
     tee: tee.label || tee.name,
     par: Number(tee.par),
     rating: Number(tee.rating),
-    slope: Number(tee.slope)
+    slope: Number(tee.slope),
+    course_snapshot: selectedCourseSnapshot(selection)
   };
 }
 
 export async function ensureSavedApiCourse(client, userId, currentCourses, selection) {
   const item = apiSelectionToSavedCourse(selection);
-  const existing = (currentCourses || []).find(course => course.id === item.id || (
-    String(course.course).toLocaleLowerCase() === item.course.toLocaleLowerCase()
-    && String(course.tee).toLocaleLowerCase() === item.tee.toLocaleLowerCase()
-    && Number(course.rating) === item.rating
-    && Number(course.slope) === item.slope
-  ));
-  if (existing) return existing;
+  // An explicit API selection refreshes only its private saved tee, not old rounds.
+  // Never conflate a manually-entered course with a provider identity by name.
   const row = { ...item, user_id: userId };
   const { error } = await client.from('golf_courses').upsert(row, { onConflict: 'user_id,id' });
   if (error) throw error;
@@ -30,4 +28,3 @@ export async function ensureSavedApiCourse(client, userId, currentCourses, selec
 function safeId(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/(^-|-$)/g, '');
 }
-

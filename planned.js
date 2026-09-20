@@ -4,8 +4,8 @@ import {
   loadPlannedRoundData,createPlannedRound,updatePlannedRound,invitePlayers,
   respondToRound,removePlayer,leaveRound,cancelRound
 } from './planned-rounds.js';
-import { mountCoursePicker } from './course-picker.js';
-import { ensureSavedApiCourse } from './course-selection.js';
+import { mountCoursePicker } from './course-picker.js?v=2';
+import { ensureSavedApiCourse } from './course-selection.js?v=2';
 
 const client=window.AppAuth?.client;
 const root=document.querySelector('[data-planned-rounds]');

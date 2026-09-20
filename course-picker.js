@@ -1,4 +1,4 @@
-import { OpenGolfApiProvider } from './open-golf-api.js';
+import { OpenGolfApiProvider } from './open-golf-api.js?v=2';
 
 export class LatestRequestGate {
   constructor(){this.sequence=0}

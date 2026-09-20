@@ -18,7 +18,7 @@ test('normalizes partial-name search results with location context',()=>{
 test('normalizes tee choices and converts nine-hole ratings for current Fairway calculations',()=>{
   const course=normalizeCourseDetail({id:'nine',name:'Short Course',holes:9,par:36},'nine');
   const tees=normalizeTees({tees:[{tee_key:'white-m',tee_name:'White',gender:'Male',course_rating:35.6,slope:118,par:36,yardage:3100}]},course);
-  assert.deepEqual(tees,[{key:'white-m',name:'White',gender:'Male',label:'White · Male',par:72,rating:71.2,slope:118,yardage:3100}]);
+  assert.deepEqual(tees,[{key:'white-m',name:'White',gender:'Male',label:'White · Male',par:72,rating:71.2,slope:118,yardage:3100,sourceId:'white-m',sourcePar:36,sourceRating:35.6,sourceHoles:[]}]);
 });
 
 test('provider uses encoded search, caches repeated queries, and loads tee details',async()=>{
@@ -48,4 +48,3 @@ test('latest request gate rejects stale responses',()=>{
 });
 
 function response(payload){return{ok:true,status:200,json:async()=>payload}}
-
